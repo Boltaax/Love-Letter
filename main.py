@@ -1,28 +1,28 @@
-from Joueur import Joueur
+from Player import Player
 from Game import LoveLetterGame
 
 import random
 
-for nb_partie in range(10000):
-    print("Partie n°",nb_partie)
-    # Exemple de partie
-    nb_joueur = random.randint(2, 6)
-    joueurs = []
+for game_number in range(10000):
+    print("Game number", game_number)
+    # Example of a game
+    number_of_players = 2
+    players = []
 
-    for i in range(1, nb_joueur + 1):
-        nom_joueur = f"Joueur {i}"
-        joueur_i = Joueur(nom_joueur)
-        joueurs.append(joueur_i)
+    for i in range(1, number_of_players + 1):
+        player_name = f"Player {i}"
+        player_i = Player(player_name)
+        players.append(player_i)
 
-    jeu = LoveLetterGame(joueurs)
-    jeu.distribuer_cartes()
+    game = LoveLetterGame(players)
+    game.distribute_cards()
 
-    while max(jeu.points.values()) <= jeu.objectif_points:
-        jeu.jouer_tour()
+    while max(game.points.values()) <= game.target_points:
+        game.play_turn()
 
-    gagnant = max(jeu.points, key=jeu.points.get)
-    #   print(f"{gagnant.nom} gagne la partie avec {jeu.points[gagnant]} points !")
+    winner = max(game.points, key=game.points.get)
+    #   print(f"{winner.name} wins the game with {game.points[winner]} points!")
 
-    """for joueur in joueurs:
-        if joueur != gagnant:
-            print(f"{joueur.nom} finit la partie avec {jeu.points[joueur]} points !")"""
+    """for player in players:
+        if player != winner:
+            print(f"{player.name} finishes the game with {game.points[player]} points!")"""

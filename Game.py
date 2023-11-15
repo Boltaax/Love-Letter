@@ -2,191 +2,189 @@ from Deck import Deck
 import random
 
 class LoveLetterGame:
-    def __init__(self, joueurs):
-        self.joueurs = joueurs
+    def __init__(self, players):
+        self.players = players
         self.deck = Deck()
-        self.deck.remplir_pioche()
+        self.deck.fill()
         self.deck.shuffle()
-        self.objectif_points = len(joueurs) - 1
-        self.points = {joueur: 0 for joueur in joueurs}
-        self.joueur_actif = 0
-        self.espionne_count = 0
+        self.target_points = 6 # 6 points to win the game in a 2-player game
+        self.points = {player: 0 for player in players}
+        self.active_player = 0
+        self.spy_count = 0
 
-    def distribuer_cartes(self):
-        for joueur in self.joueurs:
-            joueur.piocher(self.deck.piocher())
+    def distribute_cards(self):
+        for player in self.players:
+            player.draw(self.deck.draw())
 
-    def jouer_tour(self):
-        global carte_jouee
-        joueur_actuel = self.joueurs[self.joueur_actif]
-        #   print(f"Tour de {joueur_actuel.nom}")
-        if not joueur_actuel.reachable:
-            #   print(f"{joueur_actuel.nom} est de nouveau ciblable !")
-            joueur_actuel.reachable = True
+    def play_turn(self):
+        global played_card
+        current_player = self.players[self.active_player]
+        #   print(f"Turn of {current_player.name}")
+        if not current_player.reachable:
+            #   print(f"{current_player.name} is reachable again!")
+            current_player.reachable = True
 
-        if len(joueur_actuel.hand) > 0 and len(self.deck.pioche) > 0:
-            joueur_actuel.piocher(self.deck.piocher())
-            if joueur_actuel.comtesse():
-                for carte in joueur_actuel.hand:
-                    if carte.nom == "Comtesse":
-                        joueur_actuel.hand.remove(carte)
-                        carte_jouee = carte  # Utilisez la carte retirée
+        if len(current_player.hand) > 0 and len(self.deck.draw_pile) > 0:
+            current_player.draw(self.deck.draw())
+            if current_player.countess():
+                for card in current_player.hand:
+                    if card.name == "Countess":
+                        current_player.hand.remove(card)
+                        played_card = card  # Use the removed card
                         break
             else:
-                carte_jouee = joueur_actuel.play_best_card()  # Le joueur joue une carte de sa main
-            #   print(f"{joueur_actuel.nom} joue la carte {carte_jouee.nom}")
-            self.resolve_effet(carte_jouee)
-        self.fin_de_manche()
+                played_card = current_player.play_best_card()  # Player plays a card from their hand
+            #   print(f"{current_player.name} plays the {played_card.name} card")
+            self.resolve_effect(played_card)
+        self.end_of_round()
 
 
-    def resolve_effet(self, carte):
-        if carte_jouee.nom == "Espionne":
-            self.espionne_count += 1
-        if carte.nom == "Garde":
-            joueur_cible = self.choisir_joueur_cible()
-            if joueur_cible is not None:
-                nom_personnage = self.choisir_personnage()
-                #   print(f"{self.joueurs[self.joueur_actif].nom} choisit {joueur_cible.nom} comme cible et devine {nom_personnage}")
-                if nom_personnage in [c.nom for c in joueur_cible.hand]:
-                    joueur_cible.hand = [c for c in joueur_cible.hand if c.nom != nom_personnage]
-                    #   print(f"La devinette est correcte. {joueur_cible.nom} perd la carte {nom_personnage}")
+    def resolve_effect(self, card):
+        if played_card.name == "Spy":
+            self.spy_count += 1
+        if card.name == "Guard":
+            target_player = self.choose_target_player()
+            if target_player is not None:
+                guessed_character = self.choose_character()
+                #   print(f"{self.players[self.active_player].name} chooses {target_player.name} as target and guesses {guessed_character}")
+                if guessed_character in [c.name for c in target_player.hand]:
+                    target_player.hand = [c for c in target_player.hand if c.name != guessed_character]
+                    #   print(f"The guess is correct. {target_player.name} loses the {guessed_character} card")
                 else:
-                    #   print(f"La devinette est incorrecte. Rien ne se passe.")
+                    #   print("The guess is incorrect. Nothing happens.")
                     pass
             else :
-                #   print("Aucun joueur n'est ciblable, la carte n'a aucun effet !")
+                #   print("No player is targetable, the card has no effect!")
                 pass
 
-        elif carte.nom == "Prêtre":
-            joueur_cible = self.choisir_joueur_cible()
-            if joueur_cible is not None:
-                #   print(f"{self.joueurs[self.joueur_actif].nom} choisit {joueur_cible.nom} comme cible et regarde {joueur_cible.show_card().nom}")
+        elif card.name == "Priest":
+            target_player = self.choose_target_player()
+            if target_player is not None:
+                #   print(f"{self.players[self.active_player].name} chooses {target_player.name} as target and looks at {target_player.show_card().name}")
                 pass
             else :
-                #   print("Aucun joueur n'est ciblable, la carte n'a aucun effet !")
+                #   print("No player is targetable, the card has no effect!")
                 pass
-        elif carte.nom == "Baron":
-            joueur_cible = self.choisir_joueur_cible()
-            if joueur_cible is not None:
-                joueur_actuel = self.joueurs[self.joueur_actif]
-                carte_joueur_actif = joueur_actuel.show_card()
-                carte_joueur_cible = joueur_cible.show_card()
-                #   print(f"{joueur_actuel.nom} choisit {joueur_cible.nom} comme cible.")
-                #   print(f"{joueur_actuel.nom} a la carte {carte_joueur_actif.nom} ({carte_joueur_actif.valeur}).")
-                #   print(f"{joueur_cible.nom} a la carte {carte_joueur_cible.nom} ({carte_joueur_cible.valeur}).")
-                if carte_joueur_actif.valeur > carte_joueur_cible.valeur:
-                    #   print(f"{joueur_actuel.nom} remporte le duel. {joueur_cible.nom} perd la manche.")
-                    joueur_cible.hand.remove(carte_joueur_cible)
-                elif carte_joueur_actif.valeur < carte_joueur_cible.valeur:
-                    #   print(f"{joueur_cible.nom} remporte le duel. {joueur_actuel.nom} perd la manche.")
-                    joueur_actuel.hand.remove(carte_joueur_actif)
+        elif card.name == "Baron":
+            target_player = self.choose_target_player()
+            if target_player is not None:
+                current_player = self.players[self.active_player]
+                current_player_card = current_player.show_card()
+                target_player_card = target_player.show_card()
+                #   print(f"{current_player.name} chooses {target_player.name} as target.")
+                #   print(f"{current_player.name} has the {current_player_card.name} card ({current_player_card.value}).")
+                #   print(f"{target_player.name} has the {target_player_card.name} card ({target_player_card.value}).")
+                if current_player_card.value > target_player_card.value:
+                    #   print(f"{current_player.name} wins the duel. {target_player.name} loses the round.")
+                    target_player.hand.remove(target_player_card)
+                elif current_player_card.value < target_player_card.value:
+                    #   print(f"{target_player.name} wins the duel. {current_player.name} loses the round.")
+                    current_player.hand.remove(current_player_card)
                 else:
-                    #   print("Égalité, personne ne perd la manche.")
+                    #   print("Tie, no one loses the round.")
                     pass
             else :
-                #   print("Aucun joueur n'est ciblable, la carte n'a aucun effet !")
+                #   print("No player is targetable, the card has no effect!")
                 pass
-        elif carte.nom == "Servante":
-            self.joueurs[self.joueur_actif].reachable = False
-            #   print(f"{self.joueurs[self.joueur_actif].nom} n'est pas ciblable pour un tour !")
-        elif carte.nom == "Prince":
-            joueur_cible = self.choisir_joueur_cible()
-            if joueur_cible is not None and len(self.deck.pioche) > 0:
-                #   print(f"{self.joueurs[self.joueur_actif].nom} choisit {joueur_cible.nom}")
-                joueur_cible.throw()
-                joueur_cible.piocher(self.deck.piocher())
+        elif card.name == "Handmaid":
+            self.players[self.active_player].reachable = False
+            #   print(f"{self.players[self.active_player].name} is not targetable for a turn!")
+        elif card.name == "Prince":
+            target_player = self.choose_target_player()
+            if target_player is not None and len(self.deck.draw_pile) > 0:
+                #   print(f"{self.players[self.active_player].name} chooses {target_player.name}")
+                target_player.discard()
+                target_player.draw(self.deck.draw())
             else :
-                #   print("Aucun joueur n'est ciblable, la carte n'a aucun effet !")
+                #   print("No player is targetable, the card has no effect!")
                 pass
-        elif carte.nom == "Chancelier":
-            joueur_actuel = self.joueurs[self.joueur_actif]
-            # Vérifiez s'il y a suffisamment de cartes dans la pioche.
-            cartes_piochees = []
+        elif card.name == "Chancellor":
+            current_player = self.players[self.active_player]
+            # Check if there are enough cards in the draw pile.
+            drawn_cards = []
             for _ in range(2):
-                if len(self.deck.pioche) > 0:
-                    carte_piochee = self.deck.piocher()
-                    cartes_piochees.append(carte_piochee)
+                if len(self.deck.draw_pile) > 0:
+                    drawn_card = self.deck.draw()
+                    drawn_cards.append(drawn_card)
                 else:
-                    #   print("La pioche est vide.")
+                    #   print("The draw pile is empty.")
                     break
-            # Affiche les cartes piochées.
-            #   print(f"{joueur_actuel.nom} pioche {len(cartes_piochees)} cartes : {[carte.nom for carte in cartes_piochees]}")
-            # Vérifiez si des cartes ont été piochées avant de continuer.
-            if len(cartes_piochees) > 0:
-                carte_a_garder = joueur_actuel.choose_card_to_keep(cartes_piochees)
-                #   print(f"{joueur_actuel.nom} conserve la carte {carte_a_garder.nom} ({carte_a_garder.valeur}).")
-                cartes_a_remettre = [carte for carte in cartes_piochees if carte != carte_a_garder]
-                cartes_a_remettre.reverse()  # Remettez les cartes dans l'ordre inverse sous le paquet.
-                self.deck.pioche.extend(cartes_a_remettre)
-        elif carte.nom == "Roi":
-            joueur_cible = self.choisir_joueur_cible()
-            if joueur_cible is not None:
-                joueur_actuel = self.joueurs[self.joueur_actif]
-                #   print(f"{joueur_actuel.nom} choisit {joueur_cible.nom} comme cible.")
-                carte_joueur_actif = joueur_actuel.show_card()
-                carte_joueur_cible = joueur_cible.show_card()
-                #   print(f"{joueur_actuel.nom} a la carte {carte_joueur_actif.nom} ({carte_joueur_actif.valeur}).")
-                #   print(f"{joueur_cible.nom} a la carte {carte_joueur_cible.nom} ({carte_joueur_cible.valeur}).")
-                joueur_actuel.hand.remove(carte_joueur_actif)
-                joueur_cible.hand.remove(carte_joueur_cible)
-                joueur_actuel.hand.append(carte_joueur_cible)
-                joueur_cible.hand.append(carte_joueur_actif)
-                #   print(f"{joueur_actuel.nom} et {joueur_cible.nom} ont échangé leurs cartes.")
+            # Display the drawn cards.
+            #   print(f"{current_player.name} draws {len(drawn_cards)} cards: {[card.name for card in drawn_cards]}")
+            # Check if any cards were drawn before continuing.
+            if len(drawn_cards) > 0:
+                card_to_keep = current_player.choose_card_to_keep(drawn_cards)
+                #   print(f"{current_player.name} keeps the {card_to_keep.name} card ({card_to_keep.value}).")
+                cards_to_return = [card for card in drawn_cards if card != card_to_keep]
+                cards_to_return.reverse()  # Put the cards back in reverse order under the draw pile.
+                self.deck.draw_pile.extend(cards_to_return)
+        elif card.name == "King":
+            target_player = self.choose_target_player()
+            if target_player is not None:
+                current_player = self.players[self.active_player]
+                #   print(f"{current_player.name} chooses {target_player.name} as target.")
+                current_player_card = current_player.show_card()
+                target_player_card = target_player.show_card()
+                #   print(f"{current_player.name} has the {current_player_card.name} card ({current_player_card.value}).")
+                #   print(f"{target_player.name} has the {target_player_card.name} card ({target_player_card.value}).")
+                current_player.hand.remove(current_player_card)
+                target_player.hand.remove(target_player_card)
+                current_player.hand.append(target_player_card)
+                target_player.hand.append(current_player_card)
+                #   print(f"{current_player.name} and {target_player.name} have exchanged their cards.")
             else :
-                #   print("Aucun joueur n'est ciblable, la carte n'a aucun effet !")
+                #   print("No player is targetable, the card has no effect!")
                 pass
-        elif carte.nom == "Comtesse":
+        elif card.name == "Countess":
             pass
-        elif carte.nom == "Princesse":
-            joueur_actuel = self.joueurs[self.joueur_actif]
-            #   print(f"{joueur_actuel.nom} joue la Princesse et est éliminé de la manche.")
-            joueur_actuel.hand.remove(joueur_actuel.show_card())
+        elif card.name == "Princess":
+            current_player = self.players[self.active_player]
+            #   print(f"{current_player.name} plays the Princess and is eliminated from the round.")
+            current_player.hand.remove(current_player.show_card())
 
 
-    def choisir_joueur_cible(self):
-        joueur_cible = None
-        joueur_actuel = self.joueurs[self.joueur_actif]
-        joueurs_disponibles = [j for j in self.joueurs if (j != joueur_actuel and j.reachable and len(j.hand) > 0)]
-        if len(joueurs_disponibles) > 0:
-            joueur_cible = random.choice(joueurs_disponibles)
-        return joueur_cible
+    def choose_target_player(self):
+        target_player = None
+        current_player = self.players[self.active_player]
+        available_players = [j for j in self.players if (j != current_player and j.reachable and len(j.hand) > 0)]
+        if len(available_players) > 0:
+            target_player = random.choice(available_players)
+        return target_player
 
-    def choisir_personnage(self):
-        # Liste de tous les personnages possibles
-        personnages_possibles = ["Espionne", "Prêtre", "Baron", "Servante", "Prince", "Chancelier", "Roi",
-                                 "Comtesse", "Princesse"]
-        # Choisissez un personnage au hasard parmi les personnages restants
-        personnage_choisi = random.choice(personnages_possibles)
-        return personnage_choisi
+    def choose_character(self):
+        # List of all possible characters
+        possible_characters = ["Spy", "Priest", "Baron", "Handmaid", "Prince", "Chancellor", "King",
+                                 "Countess", "Princess"]
+        # Choose a character at random from the remaining characters
+        chosen_character = random.choice(possible_characters)
+        return chosen_character
 
-    def fin_de_manche(self):
-        if len(self.deck.pioche) == 0 or (len([j for j in self.joueurs if len(j.hand) > 0]) == 1):
-            joueurs_en_jeu = [j for j in self.joueurs if len(j.hand) > 0]
-            if joueurs_en_jeu:
-                joueur_gagnant = max(joueurs_en_jeu, key=lambda j: max([c.valeur for c in j.hand]))
-                #AJOUTER POINTS BONUS ESPIONNE
-                if len(self.deck.pioche) == 0:
-                    #   print("Il n'y a plus de carte dans la pioche !")
+    def end_of_round(self):
+        if len(self.deck.draw_pile) == 0 or (len([j for j in self.players if len(j.hand) > 0]) == 1):
+            players_in_game = [j for j in self.players if len(j.hand) > 0]
+            if players_in_game:
+                winning_player = max(players_in_game, key=lambda j: max([c.value for c in j.hand]))
+                # ADD SPY BONUS POINTS
+                if len(self.deck.draw_pile) == 0:
+                    #   print("There are no more cards in the draw pile!")
                     pass
                 else :
-                    #   print(f"{joueur_gagnant.nom} est le dernier joueur en vie.")
+                    #   print(f"{winning_player.name} is the last player standing.")
                     pass
-                self.points[joueur_gagnant] += 1
-                #   print(f"{joueur_gagnant.nom} gagne la manche et obtient 1 point.")
-            self.nouvelle_manche()
+                self.points[winning_player] += 1
+                #   print(f"{winning_player.name} wins the round and gets 1 point.")
+            self.new_round()
         else:
-            if self.joueur_actif == len(self.joueurs) - 1:
-                self.joueur_actif = 0
+            if self.active_player == len(self.players) - 1:
+                self.active_player = 0
             else:
-                self.joueur_actif += 1
+                self.active_player += 1
 
-    def nouvelle_manche(self):
+    def new_round(self):
         self.deck = Deck()
-        self.deck.remplir_pioche()
+        self.deck.fill()
         self.deck.shuffle()
-        for joueur in self.joueurs:
-            joueur.hand = []
-        self.distribuer_cartes()
-        self.joueur_actif = 0
-
-
+        for player in self.players:
+            player.hand = []
+        self.distribute_cards()
+        self.active_player = 0

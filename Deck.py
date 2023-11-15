@@ -1,26 +1,26 @@
-from Cards import Carte
+from Cards import Card
 import random
 
 class Deck:
     def __init__(self):
-        self.pioche = []
+        self.draw_pile = []
 
-    def remplir_pioche(self):
-        self.pioche = (
-            [Carte("Espionne", 0)] * 2 +
-            [Carte("Garde", 1)] * 6 +
-            [Carte("Prêtre", 2)] * 2 +
-            [Carte("Baron", 3)] * 2 +
-            [Carte("Servante", 4)] * 2 +
-            [Carte("Prince", 5)] * 2 +
-            [Carte("Chancelier", 6)] * 2 +
-            [Carte("Roi", 7)] +
-            [Carte("Comtesse", 8)] +
-            [Carte("Princesse", 9)]
+    def fill(self):
+        self.deck = (
+            [Card("Spy", 0)] * 2 +
+            [Card("Guard", 1)] * 6 +
+            [Card("Priest", 2)] * 2 +
+            [Card("Baron", 3)] * 2 +
+            [Card("Handmaid", 4)] * 2 +
+            [Card("Prince", 5)] * 2 +
+            [Card("Chancellor", 6)] * 2 +
+            [Card("King", 7)] +
+            [Card("Countess", 8)] +
+            [Card("Princess", 9)]
         )
 
     def shuffle(self):
-        random.shuffle(self.pioche)
+        random.shuffle(self.deck)
 
-    def piocher(self):
-        return self.pioche.pop(0);
+    def draw(self):
+        return self.deck.pop(0)
