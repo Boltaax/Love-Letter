@@ -1,28 +1,36 @@
 from Player import Player
 from Game import LoveLetterGame
 
-import random
+def create_players(number_of_players):
+    """
+    Create and return a list of players for the game.
 
-for game_number in range(10000):
-    print("Game number", game_number)
-    # Example of a game
-    number_of_players = 2
+    :param number_of_players: The number of players in the game.
+    :return: A list of Player objects.
+    """
     players = []
-
     for i in range(1, number_of_players + 1):
         player_name = f"Player {i}"
-        player_i = Player(player_name)
-        players.append(player_i)
+        players.append(Player(player_name))
+    return players
 
+def play_game(players):
+    """
+    Play a single game of LoveLetter with the given players.
+
+    :param players: A list of Player objects participating in the game.
+    """
     game = LoveLetterGame(players)
     game.distribute_cards()
 
-    while max(game.points.values()) <= game.target_points:
+    while max(game.points.values()) < game.target_points:
         game.play_turn()
 
     winner = max(game.points, key=game.points.get)
-    #   print(f"{winner.name} wins the game with {game.points[winner]} points!")
+    print(f"{winner.name} wins the game with {game.points[winner]} points!")
 
-    """for player in players:
-        if player != winner:
-            print(f"{player.name} finishes the game with {game.points[player]} points!")"""
+# Main script
+if __name__ == "__main__":
+    number_of_players = 2
+    players = create_players(number_of_players)
+    play_game(players)

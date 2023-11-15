@@ -3,10 +3,17 @@ import random
 
 class Deck:
     def __init__(self):
+        """
+        Initialize a new deck of cards.
+        """
         self.draw_pile = []
+        self.fill()
 
     def fill(self):
-        self.deck = (
+        """
+        Fill the deck with the standard set of LoveLetter cards.
+        """
+        self.draw_pile = (
             [Card("Spy", 0)] * 2 +
             [Card("Guard", 1)] * 6 +
             [Card("Priest", 2)] * 2 +
@@ -20,7 +27,18 @@ class Deck:
         )
 
     def shuffle(self):
-        random.shuffle(self.deck)
+        """
+        Shuffle the deck.
+        """
+        random.shuffle(self.draw_pile)
 
     def draw(self):
-        return self.deck.pop(0)
+        """
+        Draw a card from the top of the deck.
+        
+        :return: The drawn card, or None if the deck is empty.
+        """
+        if self.draw_pile:
+            return self.draw_pile.pop()
+        else:
+            return None
