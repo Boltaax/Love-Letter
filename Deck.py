@@ -1,6 +1,7 @@
 from Cards import Card
 import random
 
+
 class Deck:
     def __init__(self):
         """
@@ -8,6 +9,7 @@ class Deck:
         """
         self.draw_pile = []
         self.fill()
+
 
     def fill(self):
         """
@@ -26,11 +28,13 @@ class Deck:
             [Card("Princess", 9)]
         )
 
+
     def shuffle(self):
         """
         Shuffle the deck.
         """
         random.shuffle(self.draw_pile)
+
 
     def draw(self):
         """

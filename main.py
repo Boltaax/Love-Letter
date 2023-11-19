@@ -2,19 +2,22 @@ from Player import Player
 from Game import LoveLetterGame
 from tqdm import tqdm
 
+
 def create_players(number_of_players):
     """
     Create and return a list of players for the game.
-
+    
     :param number_of_players: The number of players in the game.
+
     :return: A list of Player objects.
     """
     players = []
     for i in range(1, number_of_players + 1):
+        player_type = input(f"Is Player {i} human? (y/n): ").strip().lower()
+        is_human = player_type == 'y'
         player_name = f"Player {i}"
-        players.append(Player(player_name, is_human=False))
+        players.append(Player(player_name, is_human=is_human))
     return players
-
 
 def play_game(players, verbose=False):
     """
@@ -28,28 +31,30 @@ def play_game(players, verbose=False):
     while max(game.points.values()) < game.target_points:
         game.play_turn()
 
-    winner = max(game.points, key=game.points.get)
-    return winner
+    return max(game.points, key=game.points.get)
 
 
 # Main script
 if __name__ == "__main__":
-    number_of_players = 2
-    number_of_games = 10
+    number_of_players = int(input("Enter the number of players (2-6): "))
+    number_of_games = int(input("Enter the number of games to play: "))
+
+    # Determine verbosity based on the number of games
+    verbose = False
+    if number_of_games == 1:
+        verbose_input = input("Enable verbose mode? (y/n): ").strip().lower()
+        verbose = verbose_input == 'y'
+
     players = create_players(number_of_players)
-    player1_wins = 0
-    player2_wins = 0
+    win_counts = {player.name: 0 for player in players}
 
     with tqdm(total=number_of_games) as pbar:
         for _ in range(number_of_games):
-            winner = play_game(players, verbose=True)
-            if winner.name == "Player 1":
-                player1_wins += 1
-            elif winner.name == "Player 2":
-                player2_wins += 1
+            winner = play_game(players, verbose=verbose)
+            win_counts[winner.name] += 1
             pbar.update(1)
 
-    print(f"Player 1 wins: {player1_wins}")
-    print(f"Player 2 wins: {player2_wins}")
-    print(f"Player 1 win rate: {player1_wins / (player1_wins + player2_wins)}")
-    print(f"Player 2 win rate: {player2_wins / (player1_wins + player2_wins)}")
+    total_games = sum(win_counts.values())
+    for player_name, wins in win_counts.items():
+        win_rate = wins / total_games if total_games > 0 else 0
+        print(f"{player_name} wins: {wins} ({win_rate:.2%} win rate)")
