@@ -6,12 +6,12 @@ class Card:
         :param name: The name of the card (e.g., 'Guard', 'Priest').
         :param value: The value or strength of the card.
         """
-        # Validation can be added here if needed
         self.name = name
         self.value = value
+
 
     def __str__(self):
         """
         Return a string representation of the card.
         """
-        return f"Card(Name: {self.name}, Value: {self.value})"
+        return f"Card {self.name} with value {self.value}"
