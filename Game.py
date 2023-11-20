@@ -136,11 +136,18 @@ class LoveLetterGame:
     
 
     def effect_spy(self):
+        """
+        Effect of the Spy card: no active effect.
+        The only remaining player to have played or discarded a spy, if any, wins 1 bonus point.
+        """
         current_player = self.active_player
         current_player.has_played_or_discarded_spy = True
 
 
     def effect_guard(self):
+        """
+        Effect of the Guard card: guess a character, if correct, the target player is eliminated from the round.
+        """
         target_player = self.active_player.choose_target_player(self.players)
         if not target_player:
             self.log("No player is targetable, the card has no effect!")
@@ -157,6 +164,9 @@ class LoveLetterGame:
 
 
     def effect_priest(self):
+        """
+        Effect of the Priest card: look at the target player's card.
+        """
         target_player = self.active_player.choose_target_player(self.players)
         if target_player:
             self.log(f"{self.active_player.name} chooses {target_player.name} as target and looks at {target_player.card().name}")
@@ -165,6 +175,10 @@ class LoveLetterGame:
 
 
     def effect_baron(self):
+        """
+        Effect of the Baron card: compare the target player's card with the current player's card.
+        The player with the lower value card is eliminated from the round.
+        """
         target_player = self.active_player.choose_target_player(self.players)
         if not target_player:
             self.log("No player is targetable, the card has no effect!")
@@ -183,11 +197,17 @@ class LoveLetterGame:
 
 
     def effect_handmaid(self):
+        """
+        Effect of the Handmaid card: the current player cannot be targeted by other players for a turn.
+        """
         self.active_player.reachable = False
         self.log(f"{self.active_player.name} is not targetable for a turn!")
 
 
     def effect_prince(self):
+        """
+        Effect of the Prince card: the target player discards his/her card and draws a new one.
+        """
         target_player = self.active_player.choose_target_player(self.players)
         if not target_player or not self.deck.draw_pile:
             self.log("No player is targetable, or deck is empty. The card has no effect!")
@@ -198,6 +218,10 @@ class LoveLetterGame:
 
 
     def effect_chancellor(self):
+        """
+        Effect of the Chancellor card: the current player draws 2 cards from the deck.
+        One of the cards is kept, the others are returned to the deck.
+        """
         if len(self.deck.draw_pile) < 2:
             self.log("Not enough cards in the deck to draw.")
             return
@@ -211,6 +235,9 @@ class LoveLetterGame:
 
 
     def effect_king(self):
+        """
+        Effect of the King card: the current player exchanges his/her card with the target player's card.
+        """
         target_player = self.active_player.choose_target_player(self.players)
         if not target_player:
             self.log("No player is targetable, the card has no effect!")
@@ -220,28 +247,43 @@ class LoveLetterGame:
 
 
     def effect_princess(self):
+        """
+        Effect of the Princess card: the current player is eliminated from the round if he/she plays or discards the card.
+        """
         current_player = self.active_player
         self.eliminate_player(current_player)
         self.log(f"{current_player.name} played the Princess and is eliminated from the round.")
 
 
-    # Helper Methods for effects
     def log(self, message):
+        """
+        Print the given message if verbose mode is enabled.
+        """
         if self.verbose:
             print(message)
 
 
     def log_duel_info(self, card1, card2):
+        """
+        Print the cards of the two players involved in a duel.
+        """
         self.log(f"{self.active_player.name} has the {card1.name} card ({card1.value}).")
         self.log(f"Target player has the {card2.name} card ({card2.value}).")
 
 
+    # Helper Methods for effects
     def eliminate_player(self, player):
+        """
+        Eliminate the given player from the round.
+        """
         self.log(f"{player.name} loses the round.")
         player.hand = []
 
 
     def discard_and_draw(self, player):
+        """
+        Discard the target player's card and draw a new one.
+        """
         discarded_card = player.discard()
         if discarded_card:
             self.handle_discarded_card(discarded_card, player)
@@ -249,6 +291,9 @@ class LoveLetterGame:
 
 
     def handle_discarded_card(self, card, player):
+        """
+        Handle the effect of the discarded card.
+        """
         if card.name == "Spy":
             self.log(f"{player.name} discarded the Spy")
             player.has_played_or_discarded_spy = True
@@ -258,6 +303,9 @@ class LoveLetterGame:
 
 
     def return_cards_to_deck(self, drawn_cards, card_to_keep):
+        """
+        Return the cards to the deck, except the one the player chose to keep.
+        """
         cards_to_return = [card for card in drawn_cards if card != card_to_keep]
         if card_to_keep not in self.active_player.hand:
             cards_to_return.append(self.active_player.hand.pop())
@@ -265,6 +313,9 @@ class LoveLetterGame:
 
 
     def exchange_cards(self, player1, player2):
+        """
+        Exchange the cards of the two players.
+        """
         card1 = player1.card()
         card2 = player2.card()
         self.log(f"{player1.name} and {player2.name} exchange their cards.")
@@ -274,9 +325,10 @@ class LoveLetterGame:
         player2.hand.append(card1)
 
 
-
-
     def end_of_round(self):
+        """
+        Handle the end of the round.
+        """
         if self.is_round_over():
             winning_players = self.determine_round_winners()
             self.award_points(winning_players)
@@ -285,16 +337,25 @@ class LoveLetterGame:
 
 
     def is_round_over(self):
+        """
+        Check if the round is over based on the game state.
+        """
         return len(self.deck.draw_pile) == 0 or len([p for p in self.players if p.hand]) == 1
 
 
     def determine_round_winners(self):
+        """
+        Determine the winner(s) of the round.
+        """
         players_in_game = [p for p in self.players if p.hand]
         max_card_value = max(max(p.hand, key=lambda c: c.value).value for p in players_in_game)
         return [p for p in players_in_game if max(p.hand, key=lambda c: c.value).value == max_card_value]
 
 
     def award_points(self, winners):
+        """
+        Award points to the winner(s) of the round.
+        """
         for player in winners:
             self.points[player] += 1
             self.log(f"{player.name} wins the round and gets 1 point!")
@@ -303,19 +364,27 @@ class LoveLetterGame:
 
 
     def log_round_results(self, winners):
+        """
+        Print the results of the round.
+        """
         self.log(f"Round winners: {', '.join(p.name for p in winners)}")
         self.log(f"Current points: {', '.join(f'{p.name}: {self.points[p]}' for p in self.players)}")
 
 
     def award_spy_bonus(self):
-        spy_players = [p for p in self.players if p.has_played_or_discarded_spy]
+        """
+        Award a bonus point to the only player to have played or discarded a Spy card, if any.
+        """
+        spy_players = [p for p in self.players if p.has_played_or_discarded_spy and p.hand]
         if len(spy_players) == 1:
             self.points[spy_players[0]] += 1
             self.log(f"{spy_players[0].name} gets 1 bonus point for being the only player to play or discard a Spy card.")
 
 
-
     def new_round(self):
+        """
+        Start a new round.
+        """
         self.deck = Deck()
         self.deck.fill()
         self.deck.shuffle()
@@ -324,6 +393,9 @@ class LoveLetterGame:
         self.active_player = self.players[0]
 
     def reset_players_for_new_round(self):
+        """
+        Reset the players for a new round.
+        """
         for player in self.players:
             player.hand = []
             player.has_played_or_discarded_spy = False
