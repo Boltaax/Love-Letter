@@ -392,6 +392,7 @@ class LoveLetterGame:
         self.distribute_cards()
         self.active_player = self.players[0]
 
+
     def reset_players_for_new_round(self):
         """
         Reset the players for a new round.

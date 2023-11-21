@@ -19,6 +19,7 @@ def create_players(number_of_players):
         players.append(Player(player_name, is_human=is_human))
     return players
 
+
 def play_game(players, verbose=False):
     """
     Play a single game of LoveLetter with the given players.
