@@ -1,6 +1,7 @@
-from Player import Player
-from Game import LoveLetterGame
+from player import Player
+from game import LoveLetterGame
 from tqdm import tqdm
+from player_strategies import get_strategies
 
 
 def create_players(number_of_players):
@@ -8,15 +9,32 @@ def create_players(number_of_players):
     Create and return a list of players for the game.
     
     :param number_of_players: The number of players in the game.
-
     :return: A list of Player objects.
     """
     players = []
+    strategies = get_strategies()
+    strategy_names = list(strategies.keys())
+
+    # Display available strategies
+    print("Available strategies:")
+    for i, name in enumerate(strategy_names, 1):
+        print(f"{i}. {name}")
+
     for i in range(1, number_of_players + 1):
-        player_type = input(f"Is Player {i} human? (y/n): ").strip().lower()
-        is_human = player_type == 'y'
+        while True:
+            try:
+                choice = int(input(f"Choose the strategy for Player {i} (enter a number): "))
+                if 1 <= choice <= len(strategy_names):
+                    strategy_class = strategies[strategy_names[choice - 1]]
+                    break
+                else:
+                    print("Invalid number. Please choose a valid strategy number.")
+            except ValueError:
+                print("Invalid input. Please enter a number.")
+
         player_name = f"Player {i}"
-        players.append(Player(player_name, is_human=is_human))
+        players.append(Player(player_name, strategy=strategy_class()))
+
     return players
 
 

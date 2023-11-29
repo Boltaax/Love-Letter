@@ -1,8 +1,8 @@
-import random
+from player_strategies import RandomStrategy, HumanStrategy
 
 
 class Player:
-    def __init__(self, name, is_human=False):
+    def __init__(self, name, strategy):
         """
         Initialize a new player with a given name.
 
@@ -12,7 +12,7 @@ class Player:
         self.name = name
         self.hand = []
         self.reachable = True
-        self.is_human = is_human
+        self.strategy = strategy
         self.has_played_or_discarded_spy = False
 
 
@@ -28,11 +28,11 @@ class Player:
 
     def choose_card_to_play(self):
         """
-        Choose a card to play. Human players choose a card, while AI players choose randomly.
+        Choose a card to play according to the player's strategy.
 
         :return: The chosen card.
         """
-        choosen_card = self._choose_from_list(self.hand, "choose a card to play: ")
+        choosen_card = self.strategy.choose_card_to_play(self)
         self.hand.remove(choosen_card)
         return choosen_card
 
@@ -63,37 +63,13 @@ class Player:
 
     def keep_card(self, cards):
         """
-        Choose a card to keep after playing the "Chancellor" card. Human players choose a card, while AI players choose randomly.
+        Choose a card to keep after playing the "Chancellor" card, according to the player's strategy.
 
         :param cards: The list of cards to choose from.
 
         :return: The chosen card.
         """
-        if self.is_human:
-            # Display cards and prompt for choice
-            i = 0
-            for i, card in enumerate(cards):
-                print(f"{i}: {card}")
-            print(f"{i+1}: {self.hand[0]}")
-            
-            # Validate user input
-            while True:
-                choice = input(f"{self.name}, choose a card to keep: ")
-                if not choice.isdigit():
-                    print("Invalid input. Please enter a number.")
-                    continue
-                choice = int(choice)
-                if choice < 0 or choice >= len(cards) + 1:
-                    print("Invalid input. Please enter a valid card number.")
-                    continue
-                break
-            
-            if choice == len(cards):
-                return self.hand[0]
-            else:
-                return cards[choice]
-        else:
-            return cards[random.randint(0, len(cards)-1)]
+        return self.strategy.keep_card(self, cards)
 
 
     def countess(self):
@@ -107,54 +83,30 @@ class Player:
 
     def choose_target_player(self, players):
         """
-        Choose a target player to use a card on. Human players choose a player, while AI players choose randomly.
+        Choose a target player to use a card on, according to the player's strategy.
 
         :param players: The list of players to choose from.
 
         :return: The chosen player.
         """
         available_players = [p for p in players if p != self and p.reachable and p.hand]
-        return self._choose_from_list(available_players, "Choose a player to target: ")
+        return self.strategy.choose_target_player(self, available_players)
 
 
     def choose_character(self):
         """
-        Choose a character to guess because of the "Guard" card. Human players choose a character, while AI players choose randomly.
+        Choose a character to guess because of the "Guard" card, according to the player's strategy.
 
         :return: The chosen character.
         """
         # List of all possible characters
         possible_characters = ["Spy", "Priest", "Baron", "Handmaid", "Prince", "Chancellor", "King",
                                  "Countess", "Princess"]
-        return self._choose_from_list(possible_characters, "Choose a character to guess: ")
-
-    
-    def _choose_from_list(self, items, prompt):
-        """
-        Utility method for choosing an item from a list, handling both human and AI players.
-
-        :param items: The list of items to choose from.
-        :param prompt: The prompt to display for human players.
-
-        :return: The chosen item.
-        """
-        if not items:
-            return None
-
-        if self.is_human:
-            for i, item in enumerate(items):
-                print(f"{i}: {item}")
-            while True:
-                choice = input(f"{self.name}, {prompt}")
-                if choice.isdigit() and 0 <= int(choice) < len(items):
-                    return items[int(choice)]
-                print("Invalid input. Please enter a valid number.")
-        else:
-            return random.choice(items)
+        return self.strategy.choose_character(self, possible_characters)
 
 
     def __str__(self):
         """
         Return a string representation of the player.
         """
-        return f"Player {self.name} with hand {self.hand}"
+        return f"{self.name}"

@@ -1,5 +1,4 @@
-from Deck import Deck
-import random
+from deck import Deck
 
 
 class LoveLetterGame:
@@ -294,8 +293,8 @@ class LoveLetterGame:
         """
         Handle the effect of the discarded card.
         """
+        self.log(f"{player.name} discards the {card.name} card")
         if card.name == "Spy":
-            self.log(f"{player.name} discarded the Spy")
             player.has_played_or_discarded_spy = True
         elif card.name == "Princess":
             self.log(f"{player.name} discarded the Princess and is eliminated from the round.")
