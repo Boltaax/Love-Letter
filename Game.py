@@ -1,5 +1,4 @@
-from deck import Deck
-
+from Deck import Deck
 
 class LoveLetterGame:
     def __init__(self, players, verbose=False):

@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 import random
+from SimulatedGame import LoveLetterSimulatedGame
 
 def get_strategies():
     '''
@@ -82,3 +83,72 @@ class RandomStrategy(PlayerStrategy):
 
 
 # TODO: Implement MinMaxStrategy
+
+class MinMaxStrategy(PlayerStrategy):
+    def __init__(self, depth=3):
+        self.depth = depth
+
+    def choose_card_to_play(self, player):
+        simu = LoveLetterSimulatedGame()
+        possible_moves = player.get_possible_moves()  # Define a method in your Player class to get all possible moves
+
+        best_move = None
+        best_eval = float('-inf')
+
+        for move in possible_moves:
+            # Assume play_card is a method in your LoveLetter game that simulates playing a card
+            simulated_board = simu.simulate_play_card(player, move)
+
+            # Assume evaluate_board is a method in your MinMaxStrategy that evaluates the current game state
+            eval = self.evaluate_board(player, simulated_board.players, simulated_board.cards, simulated_board.characters)
+
+            if eval > best_eval:
+                best_eval = eval
+                best_move = move
+
+        return best_move
+
+    def choose_target_player(self, player, players):
+        # Implement MinMax algorithm to choose the best target player
+        pass
+
+    def choose_character(self, player, characters):
+        # Implement MinMax algorithm to choose the best character to guess
+        pass
+
+    def keep_card(self, player, cards):
+        # Implement MinMax algorithm to choose the best card to keep
+        pass
+
+    def evaluate_board(self, player, players, cards, characters):
+        # Implement a heuristic evaluation function to evaluate the current game state
+        pass
+
+    def min_max(self, player, players, cards, characters, depth, maximizing_player):
+        if depth == 0 or game_over_condition:
+            return self.evaluate_board(player, players, cards, characters)
+
+        if maximizing_player:
+            max_eval = float('-inf')
+            for possible_move in all_possible_moves:
+                eval = self.min_max(player, players, cards, characters, depth - 1, False)
+                max_eval = max(max_eval, eval)
+            return max_eval
+        else:
+            min_eval = float('inf')
+            for possible_move in all_possible_moves:
+                eval = self.min_max(player, players, cards, characters, depth - 1, True)
+                min_eval = min(min_eval, eval)
+            return min_eval
+
+    def choose_best_move(self, player, players, cards, characters, maximizing_player):
+        best_eval = float('-inf') if maximizing_player else float('inf')
+        best_move = None
+
+        for possible_move in all_possible_moves:
+            eval = self.min_max(player, players, cards, characters, self.depth, maximizing_player)
+            if (maximizing_player and eval > best_eval) or (not maximizing_player and eval < best_eval):
+                best_eval = eval
+                best_move = possible_move
+
+        return best_move

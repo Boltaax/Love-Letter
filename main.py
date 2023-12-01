@@ -1,5 +1,5 @@
-from player import Player
-from game import LoveLetterGame
+from Player import Player
+from Game import LoveLetterGame
 from tqdm import tqdm
 from player_strategies import get_strategies
 
