@@ -1,4 +1,4 @@
-from player_strategies import RandomStrategy, HumanStrategy
+from player_strategies import *
 
 
 class Player:
@@ -103,6 +103,26 @@ class Player:
         possible_characters = ["Spy", "Priest", "Baron", "Handmaid", "Prince", "Chancellor", "King",
                                  "Countess", "Princess"]
         return self.strategy.choose_character(self, possible_characters)
+
+    def get_possible_moves(self):
+        """
+        Get a list of possible moves for the player in the current game state.
+
+        :return: A list of possible moves. Each move is represented as a tuple (action, card),
+                 where 'action' is either 'play' or 'discard', and 'card' is the card to be played or discarded.
+        """
+        possible_moves = []
+
+        if self.hand:
+            for card in self.hand:
+                possible_moves.append(('play', card))
+
+                # Add discard as a possible move only if Countess conditions are met
+                if card.name == "Countess" or len(self.hand) > 1:
+                    possible_moves.append(('discard', card))
+
+        return possible_moves
+
 
 
     def __str__(self):

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 import random
-from SimulatedGame import LoveLetterSimulatedGame
+
 
 def get_strategies():
     '''
@@ -8,7 +8,8 @@ def get_strategies():
     '''
     return {
         "Human": HumanStrategy,
-        "Random": RandomStrategy
+        "Random": RandomStrategy,
+        "MinMax": MinMaxStrategy
     }
 
 
@@ -82,14 +83,12 @@ class RandomStrategy(PlayerStrategy):
             return None
 
 
-# TODO: Implement MinMaxStrategy
-
 class MinMaxStrategy(PlayerStrategy):
-    def __init__(self, depth=3):
+    def __init__(self, depth=10):
         self.depth = depth
 
     def choose_card_to_play(self, player):
-        simu = LoveLetterSimulatedGame()
+
         possible_moves = player.get_possible_moves()  # Define a method in your Player class to get all possible moves
 
         best_move = None
@@ -97,7 +96,7 @@ class MinMaxStrategy(PlayerStrategy):
 
         for move in possible_moves:
             # Assume play_card is a method in your LoveLetter game that simulates playing a card
-            simulated_board = simu.simulate_play_card(player, move)
+            simulated_board = simulate_play_card(player, move)
 
             # Assume evaluate_board is a method in your MinMaxStrategy that evaluates the current game state
             eval = self.evaluate_board(player, simulated_board.players, simulated_board.cards, simulated_board.characters)
@@ -124,31 +123,78 @@ class MinMaxStrategy(PlayerStrategy):
         # Implement a heuristic evaluation function to evaluate the current game state
         pass
 
-    def min_max(self, player, players, cards, characters, depth, maximizing_player):
-        if depth == 0 or game_over_condition:
-            return self.evaluate_board(player, players, cards, characters)
+    def min_max(self, player, simulated_board, depth, maximizing_player):
+        if depth == 0 or simulated_board.is_game_over():
+            return self.evaluate_board(player, simulated_board)
 
         if maximizing_player:
             max_eval = float('-inf')
-            for possible_move in all_possible_moves:
-                eval = self.min_max(player, players, cards, characters, depth - 1, False)
+            for possible_move in simulated_board.get_possible_moves():
+                next_board = simulated_board.simulate_play_card(player, possible_move)
+                eval = self.min_max(player, next_board, depth - 1, False)
                 max_eval = max(max_eval, eval)
             return max_eval
         else:
             min_eval = float('inf')
-            for possible_move in all_possible_moves:
-                eval = self.min_max(player, players, cards, characters, depth - 1, True)
+            for possible_move in simulated_board.get_possible_moves():
+                next_board = simulated_board.simulate_play_card(player, possible_move)
+                eval = self.min_max(player, next_board, depth - 1, True)
                 min_eval = min(min_eval, eval)
             return min_eval
 
-    def choose_best_move(self, player, players, cards, characters, maximizing_player):
+    def choose_best_move(self, player, simulated_board, maximizing_player):
         best_eval = float('-inf') if maximizing_player else float('inf')
         best_move = None
 
-        for possible_move in all_possible_moves:
-            eval = self.min_max(player, players, cards, characters, self.depth, maximizing_player)
+        for possible_move in simulated_board.get_possible_moves():
+            next_board = simulated_board.simulate_play_card(player, possible_move)
+            eval = self.min_max(player, next_board, self.depth, maximizing_player)
+
             if (maximizing_player and eval > best_eval) or (not maximizing_player and eval < best_eval):
                 best_eval = eval
                 best_move = possible_move
 
         return best_move
+
+def simulate_play_card(self, player, played_card):
+    """
+    Simulate the effects of a player playing a card.
+
+    :param player: The player who is playing the card.
+    :param played_card: The card the player is playing.
+
+    :return: The simulated game state after playing the card.
+    """
+    # Create a deep copy of the current game state
+    simulated_game = deepcopy(self)
+
+    # Find the player in the simulated game
+    simulated_player = next(p for p in simulated_game.players if p.name == player.name)
+
+    # Remove the played card from the player's hand
+    simulated_player.hand.remove(played_card)
+
+    # Simulate the effect of the played card
+    simulated_game.resolve_effect(played_card)
+
+    # Check if the round should end
+    if simulated_game.is_round_end():
+        simulated_game.end_of_round()
+
+    return simulated_game
+
+def simulate_move(self, player):
+    """
+    Simulate the player making a move (playing a card).
+
+    :param player: The player making the move.
+
+    :return: The simulated game state after the player's move.
+    """
+    # Choose a card to play using the MinMax strategy
+    chosen_card = player.strategy.choose_card_to_play(player)
+
+    # Simulate the effects of playing the chosen card
+    simulated_game = self.simulate_play_card(player, chosen_card)
+
+    return simulated_game
