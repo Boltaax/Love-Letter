@@ -18,6 +18,7 @@ class LoveLetterGame:
         self.active_player = players[0] # The player whose turn it is
         self.spy_count = 0 # Tracks the number of Spy cards played
         self.verbose = verbose
+        self.discarded_cards = {}
 
         # Check if the number of players is valid
         if len(players) > 6 or len(players) < 2:
@@ -168,6 +169,7 @@ class LoveLetterGame:
         target_player = self.active_player.choose_target_player(self.players)
         if target_player:
             self.log(f"{self.active_player.name} chooses {target_player.name} as target and looks at {target_player.card().name}")
+            self.active_player.remember_card(target_player.name, target_player.card().name)
         else:
             self.log("No player is targetable, the card has no effect!")
 
@@ -285,7 +287,9 @@ class LoveLetterGame:
         discarded_card = player.discard()
         if discarded_card:
             self.handle_discarded_card(discarded_card, player)
-        player.draw(self.deck.draw())
+            player.erase_memory(self.players, discarded_card)
+            if discarded_card.name != "Princess":
+                player.draw(self.deck.draw())
 
 
     def handle_discarded_card(self, card, player):

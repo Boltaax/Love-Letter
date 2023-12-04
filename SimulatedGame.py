@@ -5,6 +5,7 @@ class LoveLetterSimulatedGame(LoveLetterGame):
     def __init__(self, original_game):
         super().__init__(original_game.players)
         self.deck = deepcopy(original_game.deck)
+        self.discarded_cards = original_game.discarded_cards
         self.points = deepcopy(original_game.points)
         self.active_player = original_game.active_player
         self.spy_count = original_game.spy_count

@@ -17,7 +17,7 @@ def get_strategies():
 
 class PlayerStrategy(ABC):
     @abstractmethod
-    def choose_card_to_play(player):
+    def choose_card_to_play(self, player):
         pass
 
     @abstractmethod
@@ -90,7 +90,7 @@ class MinMaxStrategy(PlayerStrategy):
         self.depth = depth
 
     def choose_card_to_play(self, player):
-        simulated_game = LoveLetterSimulatedGame(original_game=LoveLetterGame())  # Instantiate with an initial game state
+        simulated_game = LoveLetterSimulatedGame(original_game=self)  # Instantiate with an initial game state
         best_move = self.choose_best_move(player, simulated_game, True)
         return best_move
 

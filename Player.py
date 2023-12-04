@@ -155,6 +155,17 @@ class Player:
         """
         return self.memory.get(player, {'card': None, 'position': None})
 
+    def erase_memory(self, players, card):
+        """
+        Erase the card from the memory of all players
+
+        :param players: The list of players to erase the memory for.
+        :param card: The card to be erased from the memory.
+        """
+        for p in players:
+            player_memory = p.memory.get(self.name, {})
+            if card in player_memory:
+                del player_memory[card]
 
 
 
