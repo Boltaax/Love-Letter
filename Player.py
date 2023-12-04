@@ -14,6 +14,7 @@ class Player:
         self.reachable = True
         self.strategy = strategy
         self.has_played_or_discarded_spy = False
+        self.memory = {}
 
 
     def draw(self, card):
@@ -104,24 +105,57 @@ class Player:
                                  "Countess", "Princess"]
         return self.strategy.choose_character(self, possible_characters)
 
-    def get_possible_moves(self):
+    def get_possible_moves(self, all_players):
         """
         Get a list of possible moves for the player in the current game state.
 
-        :return: A list of possible moves. Each move is represented as a tuple (action, card),
-                 where 'action' is either 'play' or 'discard', and 'card' is the card to be played or discarded.
+        :param all_players: A list of all players in the game.
+
+        :return: A list of possible moves. Each move is represented as a tuple (action, card, target),
+                 where 'action' is either 'play' or 'discard', 'card' is the card to be played or discarded,
+                 and 'target' is the target player or -1 (no specific target).
         """
         possible_moves = []
 
         if self.hand:
             for card in self.hand:
-                possible_moves.append(('play', card))
-
-                # Add discard as a possible move only if Countess conditions are met
-                if card.name == "Countess" or len(self.hand) > 1:
-                    possible_moves.append(('discard', card))
+                # Check if the card has a specific target
+                if card.name == "Guard" or card.name == "Baron" or card.name == "Priest" or card.name == "King":
+                    # Get a list of targetable players
+                    targetable_players = [p for p in all_players if p != self and p.reachable and p.hand]
+                    for target_player in targetable_players:
+                        possible_moves.append((card, target_player))
+                elif card.name == "Prince":
+                    # Get a list of targetable players
+                    targetable_players = [p for p in all_players and p.reachable and p.hand]
+                    for target_player in targetable_players:
+                        possible_moves.append((card, target_player))
+                else:
+                    possible_moves.append((card, -1))
 
         return possible_moves
+
+    def remember_card(self, player, card, position=1):
+        """
+        Remember a card that the player saw in another player's hand.
+
+        :param player: The name of the other player.
+        :param card: The card that the player saw.
+        :param position: The position of the card in the deck (default is 1).
+        """
+        self.memory[player] = {'card': card, 'position': position}
+
+    def get_memory(self, player):
+        """
+        Get the remembered card and position of a specific player.
+
+        :param player: The name of the player to retrieve the memory for.
+
+        :return: A dictionary with the remembered card and position of the specified player.
+        """
+        return self.memory.get(player, {'card': None, 'position': None})
+
+
 
 
 

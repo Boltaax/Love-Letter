@@ -37,18 +37,52 @@ class LoveLetterSimulatedGame(LoveLetterGame):
 
         return simulated_game
 
-    def simulate_move(self, player):
+    def get_possible_moves(self, all_players, player):
         """
-        Simulate the player making a move (playing a card).
+        Get a list of possible moves for the player in the current game state.
 
-        :param player: The player making the move.
+        :param player: the player whose it the turn to play.
 
-        :return: The simulated game state after the player's move.
+        :param all_players: A list of all players in the game.
+
+        :return: A list of possible moves. Each move is represented as a tuple (action, card, target),
+                 where 'action' is either 'play' or 'discard', 'card' is the card to be played or discarded,
+                 and 'target' is the target player or -1 (no specific target).
         """
-        # Choose a card to play using the MinMax strategy
-        chosen_card = player.strategy.choose_card_to_play(player)
+        possible_moves = []
 
-        # Simulate the effects of playing the chosen card
-        simulated_game = self.simulate_play_card(player, chosen_card)
+        if player.hand:
+            for card in player.hand:
+                # Check if the card has a specific target
+                if card.name == "Guard" or card.name == "Baron" or card.name == "Priest" or card.name == "King":
+                    # Get a list of targetable players
+                    targetable_players = [p for p in all_players if p != player and p.reachable and p.hand]
+                    for target_player in targetable_players:
+                        possible_moves.append((card, target_player))
+                elif card.name == "Prince":
+                    # Get a list of targetable players
+                    targetable_players = [p for p in all_players and p.reachable and p.hand]
+                    for target_player in targetable_players:
+                        possible_moves.append((card, target_player))
+                else:
+                    possible_moves.append((card, -1))
 
-        return simulated_game
+        return possible_moves
+
+    def get_possible_moves(self, player):
+        """
+        Get a list of possible moves for the given player in the current simulated game state.
+
+        :param player: The player for whom to generate possible moves.
+
+        :return: A list of possible moves. Each move is represented as a tuple (action, card),
+                 where 'action' is either 'play' or 'discard', and 'card' is the card to be played or discarded.
+        """
+        possible_moves = []
+
+        if player.hand:
+            # Add all playable cards
+            for card in player.hand:
+                possible_moves.append(('play', card))
+
+        return possible_moves

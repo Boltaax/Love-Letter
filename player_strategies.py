@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 import random
+from SimulatedGame import LoveLetterSimulatedGame
+from Game import LoveLetterGame
 
 
 def get_strategies():
@@ -88,23 +90,8 @@ class MinMaxStrategy(PlayerStrategy):
         self.depth = depth
 
     def choose_card_to_play(self, player):
-
-        possible_moves = player.get_possible_moves()  # Define a method in your Player class to get all possible moves
-
-        best_move = None
-        best_eval = float('-inf')
-
-        for move in possible_moves:
-            # Assume play_card is a method in your LoveLetter game that simulates playing a card
-            simulated_board = simulate_play_card(player, move)
-
-            # Assume evaluate_board is a method in your MinMaxStrategy that evaluates the current game state
-            eval = self.evaluate_board(player, simulated_board.players, simulated_board.cards, simulated_board.characters)
-
-            if eval > best_eval:
-                best_eval = eval
-                best_move = move
-
+        simulated_game = LoveLetterSimulatedGame(original_game=LoveLetterGame())  # Instantiate with an initial game state
+        best_move = self.choose_best_move(player, simulated_game, True)
         return best_move
 
     def choose_target_player(self, player, players):
@@ -156,45 +143,3 @@ class MinMaxStrategy(PlayerStrategy):
 
         return best_move
 
-def simulate_play_card(self, player, played_card):
-    """
-    Simulate the effects of a player playing a card.
-
-    :param player: The player who is playing the card.
-    :param played_card: The card the player is playing.
-
-    :return: The simulated game state after playing the card.
-    """
-    # Create a deep copy of the current game state
-    simulated_game = deepcopy(self)
-
-    # Find the player in the simulated game
-    simulated_player = next(p for p in simulated_game.players if p.name == player.name)
-
-    # Remove the played card from the player's hand
-    simulated_player.hand.remove(played_card)
-
-    # Simulate the effect of the played card
-    simulated_game.resolve_effect(played_card)
-
-    # Check if the round should end
-    if simulated_game.is_round_end():
-        simulated_game.end_of_round()
-
-    return simulated_game
-
-def simulate_move(self, player):
-    """
-    Simulate the player making a move (playing a card).
-
-    :param player: The player making the move.
-
-    :return: The simulated game state after the player's move.
-    """
-    # Choose a card to play using the MinMax strategy
-    chosen_card = player.strategy.choose_card_to_play(player)
-
-    # Simulate the effects of playing the chosen card
-    simulated_game = self.simulate_play_card(player, chosen_card)
-
-    return simulated_game
