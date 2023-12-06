@@ -91,7 +91,9 @@ class LoveLetterGame:
             if played_card:
                 if self.verbose:
                     print(f"{player.name} plays the {played_card.name} card.")
+                self.update_discarded_cards_count(played_card)
                 self.resolve_effect(played_card)
+
 
     
     def handle_countess_play(self, player):
@@ -169,7 +171,7 @@ class LoveLetterGame:
         target_player = self.active_player.choose_target_player(self.players)
         if target_player:
             self.log(f"{self.active_player.name} chooses {target_player.name} as target and looks at {target_player.card().name}")
-            self.active_player.remember_card(target_player.name, target_player.card().name)
+            self.active_player.remember_card(target_player.name, target_player.card())
         else:
             self.log("No player is targetable, the card has no effect!")
 
@@ -290,6 +292,7 @@ class LoveLetterGame:
             player.erase_memory(self.players, discarded_card)
             if discarded_card.name != "Princess":
                 player.draw(self.deck.draw())
+            self.update_discarded_cards_count(discarded_card)
 
 
     def handle_discarded_card(self, card, player):
@@ -403,3 +406,40 @@ class LoveLetterGame:
             player.hand = []
             player.has_played_or_discarded_spy = False
             player.reachable = True
+
+    def update_discarded_cards_count(self, card):
+        """
+        Update the count of discarded cards.
+        """
+        if card.name in self.discarded_cards:
+            self.discarded_cards[card.name] += 1
+        else:
+            self.discarded_cards[card.name] = 1
+
+    def probability_draw_card(self, player, card):
+        """
+        Calculate a probability-based score for a player.
+
+        :param player: The player for whom to calculate the score.
+
+        :return: The calculated score based on probabilities.
+        """
+        has_card = 0
+        num_card = 2
+        if player.card().name == card.name:
+            has_card = 1
+        match card.name:
+            case "Guard":
+                num_card = 6
+            case "King":
+                num_card = 1
+            case "Countess":
+                num_card = 1
+            case "Princess":
+                num_card = 1
+
+        probability_card = ( num_card - self.discarded_cards.get(card.name, 0) - len(
+                                player.get_players_with_known_card(card.name, self.players) - has_card)
+                            ) / (len(self.deck.draw_pile) + len(player.get_players_with_unknown_card(self.players)))
+
+        return probability_card

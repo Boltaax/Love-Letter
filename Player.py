@@ -7,7 +7,7 @@ class Player:
         Initialize a new player with a given name.
 
         :param name: The name of the player.
-        :param is_human: Whether the player is human or not.
+        :param strategy: Whether the player is human or not.
         """
         self.name = name
         self.hand = []
@@ -135,13 +135,13 @@ class Player:
 
         return possible_moves
 
-    def remember_card(self, player, card, position=1):
+    def remember_card(self, player, card, position=0):
         """
         Remember a card that the player saw in another player's hand.
 
         :param player: The name of the other player.
         :param card: The card that the player saw.
-        :param position: The position of the card in the deck (default is 1).
+        :param position: The position of the card in the deck (default is 0 for player).
         """
         self.memory[player] = {'card': card, 'position': position}
 
@@ -149,9 +149,9 @@ class Player:
         """
         Get the remembered card and position of a specific player.
 
-        :param player: The name of the player to retrieve the memory for.
+        :param player: The name of the player to retrieve the memory for (deck if it's the deck).
 
-        :return: A dictionary with the remembered card and position of the specified player.
+        :return: A dictionary with the remembered card and position of the card in the deck (or hand).
         """
         return self.memory.get(player, {'card': None, 'position': None})
 
@@ -166,6 +166,24 @@ class Player:
             player_memory = p.memory.get(self.name, {})
             if card in player_memory:
                 del player_memory[card]
+
+    def get_players_with_known_card(self, card_name, players):
+        """
+        Get the list of players who have a known specific card.
+
+        :param card_name: The name of the card to check.
+
+        :return: A list of players with the known card.
+        """
+        return [p for p in players if p.get_memory(p.name)['card'].name == card_name and p.hand and p != self]
+
+    def get_players_with_unknown_card(self, players):
+        """
+        Get the list of players who have unknown cards.
+
+        :return: A list of players with unknown cards.
+        """
+        return [p for p in players if p.get_memory(p.name)['card'] is None and p.hand and p != self]
 
 
 
