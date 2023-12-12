@@ -1,6 +1,3 @@
-from player_strategies import *
-
-
 class Player:
     def __init__(self, name, strategy):
         """
@@ -27,13 +24,13 @@ class Player:
             self.hand.append(card)
 
 
-    def choose_card_to_play(self):
+    def choose_card_to_play(self, game):
         """
         Choose a card to play according to the player's strategy.
 
         :return: The chosen card.
         """
-        choosen_card = self.strategy.choose_card_to_play(self)
+        choosen_card = self.strategy.choose_card_to_play(self, game)
         self.hand.remove(choosen_card)
         return choosen_card
 
@@ -62,7 +59,7 @@ class Player:
             return None
 
 
-    def keep_card(self, cards):
+    def keep_card(self, cards, game):
         """
         Choose a card to keep after playing the "Chancellor" card, according to the player's strategy.
 
@@ -70,7 +67,7 @@ class Player:
 
         :return: The chosen card.
         """
-        return self.strategy.keep_card(self, cards)
+        return self.strategy.keep_card(self, cards, game)
 
 
     def countess(self):
@@ -82,7 +79,7 @@ class Player:
         return has_comtesse and has_king_or_prince
 
 
-    def choose_target_player(self, players):
+    def choose_target_player(self, players, game):
         """
         Choose a target player to use a card on, according to the player's strategy.
 
@@ -91,10 +88,10 @@ class Player:
         :return: The chosen player.
         """
         available_players = [p for p in players if p != self and p.reachable and p.hand]
-        return self.strategy.choose_target_player(self, available_players)
+        return self.strategy.choose_target_player(self, available_players, game)
 
 
-    def choose_character(self):
+    def choose_character(self, game):
         """
         Choose a character to guess because of the "Guard" card, according to the player's strategy.
 
@@ -103,7 +100,7 @@ class Player:
         # List of all possible characters
         possible_characters = ["Spy", "Priest", "Baron", "Handmaid", "Prince", "Chancellor", "King",
                                  "Countess", "Princess"]
-        return self.strategy.choose_character(self, possible_characters)
+        return self.strategy.choose_character(self, possible_characters, game)
 
     def get_possible_moves(self, all_players):
         """
@@ -127,7 +124,7 @@ class Player:
                         possible_moves.append((card, target_player))
                 elif card.name == "Prince":
                     # Get a list of targetable players
-                    targetable_players = [p for p in all_players and p.reachable and p.hand]
+                    targetable_players = [p for p in all_players if p.reachable and p.hand]
                     for target_player in targetable_players:
                         possible_moves.append((card, target_player))
                 else:
@@ -186,10 +183,8 @@ class Player:
         return [p for p in players if p.get_memory(p.name)['card'] is None and p.hand and p != self]
 
 
-
-
     def __str__(self):
         """
         Return a string representation of the player.
         """
-        return f"{self.name}"
+        return f"{self.name} has the hand : {', '.join(card.name for card in self.hand)}"

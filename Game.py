@@ -40,6 +40,7 @@ class LoveLetterGame:
         for current_player in self.players:
             self.active_player = current_player
             if self.is_round_end():
+
                 self.end_of_round()
                 break
 
@@ -53,6 +54,12 @@ class LoveLetterGame:
         :return: Boolean indicating if the round should end.
         """
         return len([player for player in self.players if player.hand]) <= 1 or not self.deck.draw_pile
+
+    def is_round_over(self):
+        """
+        Check if the round is over based on the game state.
+        """
+        return len(self.deck.draw_pile) == 0 or len([p for p in self.players if p.hand]) == 1
     
 
     def handle_player_turn(self, player):
@@ -87,7 +94,7 @@ class LoveLetterGame:
             self.handle_countess_play(player)
         else:
             # Player chooses a card to play
-            played_card = player.choose_card_to_play()
+            played_card = player.choose_card_to_play(self)
             if played_card:
                 if self.verbose:
                     print(f"{player.name} plays the {played_card.name} card.")
@@ -149,12 +156,12 @@ class LoveLetterGame:
         """
         Effect of the Guard card: guess a character, if correct, the target player is eliminated from the round.
         """
-        target_player = self.active_player.choose_target_player(self.players)
+        target_player = self.active_player.choose_target_player(self.players, self)
         if not target_player:
             self.log("No player is targetable, the card has no effect!")
             return
 
-        guessed_character = self.active_player.choose_character()
+        guessed_character = self.active_player.choose_character(self)
         self.log(f"{self.active_player.name} chooses {target_player.name} as target and guesses {guessed_character}")
 
         if guessed_character in [c.name for c in target_player.hand]:
@@ -168,7 +175,7 @@ class LoveLetterGame:
         """
         Effect of the Priest card: look at the target player's card.
         """
-        target_player = self.active_player.choose_target_player(self.players)
+        target_player = self.active_player.choose_target_player(self.players, self)
         if target_player:
             self.log(f"{self.active_player.name} chooses {target_player.name} as target and looks at {target_player.card().name}")
             self.active_player.remember_card(target_player.name, target_player.card())
@@ -181,7 +188,7 @@ class LoveLetterGame:
         Effect of the Baron card: compare the target player's card with the current player's card.
         The player with the lower value card is eliminated from the round.
         """
-        target_player = self.active_player.choose_target_player(self.players)
+        target_player = self.active_player.choose_target_player(self.players, self)
         if not target_player:
             self.log("No player is targetable, the card has no effect!")
             return
@@ -210,7 +217,7 @@ class LoveLetterGame:
         """
         Effect of the Prince card: the target player discards his/her card and draws a new one.
         """
-        target_player = self.active_player.choose_target_player(self.players)
+        target_player = self.active_player.choose_target_player(self.players, self)
         if not target_player or not self.deck.draw_pile:
             self.log("No player is targetable, or deck is empty. The card has no effect!")
             return
@@ -231,7 +238,7 @@ class LoveLetterGame:
         drawn_cards = [self.deck.draw(), self.deck.draw()]
         self.log(f"{self.active_player.name} draws {len(drawn_cards)} card(s): {[card.name for card in drawn_cards]}")
 
-        card_to_keep = self.active_player.keep_card(drawn_cards)
+        card_to_keep = self.active_player.keep_card(drawn_cards, self)
         self.log(f"{self.active_player.name} keeps the {card_to_keep.name} card ({card_to_keep.value}).")
         self.return_cards_to_deck(drawn_cards, card_to_keep)
 
@@ -240,7 +247,7 @@ class LoveLetterGame:
         """
         Effect of the King card: the current player exchanges his/her card with the target player's card.
         """
-        target_player = self.active_player.choose_target_player(self.players)
+        target_player = self.active_player.choose_target_player(self.players, self)
         if not target_player:
             self.log("No player is targetable, the card has no effect!")
             return
@@ -340,14 +347,6 @@ class LoveLetterGame:
             self.log_round_results(winning_players)
             self.new_round()
 
-
-    def is_round_over(self):
-        """
-        Check if the round is over based on the game state.
-        """
-        return len(self.deck.draw_pile) == 0 or len([p for p in self.players if p.hand]) == 1
-
-
     def determine_round_winners(self):
         """
         Determine the winner(s) of the round.
@@ -383,7 +382,7 @@ class LoveLetterGame:
         spy_players = [p for p in self.players if p.has_played_or_discarded_spy and p.hand]
         if len(spy_players) == 1:
             self.points[spy_players[0]] += 1
-            self.log(f"{spy_players[0].name} gets 1 bonus point for being the only player to play or discard a Spy card.")
+            self.log(f"{spy_players[0].name} gets 1 bonus point for being the only player to play or discard a Spy card at the end of the round.")
 
 
     def new_round(self):
@@ -426,8 +425,9 @@ class LoveLetterGame:
         """
         has_card = 0
         num_card = 2
-        if player.card().name == card.name:
-            has_card = 1
+        for c in player.hand:
+            if c.name == card.name:
+                has_card += 1
         match card.name:
             case "Guard":
                 num_card = 6
@@ -438,8 +438,7 @@ class LoveLetterGame:
             case "Princess":
                 num_card = 1
 
-        probability_card = ( num_card - self.discarded_cards.get(card.name, 0) - len(
-                                player.get_players_with_known_card(card.name, self.players) - has_card)
-                            ) / (len(self.deck.draw_pile) + len(player.get_players_with_unknown_card(self.players)))
+        probability_card = ( num_card - self.discarded_cards.get(card.name, 0) - len(player.get_players_with_known_card(card.name, self.players) - has_card)) \
+                           / (len(self.deck.draw_pile) + len(player.get_players_with_unknown_card(self.players)))
 
         return probability_card

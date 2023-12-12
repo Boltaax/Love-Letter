@@ -26,6 +26,8 @@ class LoveLetterSimulatedGame(LoveLetterGame):
         # Find the player in the simulated game
         simulated_player = next(p for p in simulated_game.players if p.name == player.name)
 
+        played_card = next(card for card in simulated_player.hand if card.name == played_card.name)
+
         # Remove the played card from the player's hand
         simulated_player.hand.remove(played_card)
 
@@ -62,7 +64,7 @@ class LoveLetterSimulatedGame(LoveLetterGame):
                         possible_moves.append((card, target_player))
                 elif card.name == "Prince":
                     # Get a list of targetable players
-                    targetable_players = [p for p in all_players and p.reachable and p.hand]
+                    targetable_players = [p for p in all_players if p.reachable and p.hand]
                     for target_player in targetable_players:
                         possible_moves.append((card, target_player))
                 else:
@@ -70,20 +72,3 @@ class LoveLetterSimulatedGame(LoveLetterGame):
 
         return possible_moves
 
-    def get_possible_moves(self, player):
-        """
-        Get a list of possible moves for the given player in the current simulated game state.
-
-        :param player: The player for whom to generate possible moves.
-
-        :return: A list of possible moves. Each move is represented as a tuple (action, card),
-                 where 'action' is either 'play' or 'discard', and 'card' is the card to be played or discarded.
-        """
-        possible_moves = []
-
-        if player.hand:
-            # Add all playable cards
-            for card in player.hand:
-                possible_moves.append(('play', card))
-
-        return possible_moves
