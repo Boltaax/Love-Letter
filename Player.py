@@ -1,3 +1,5 @@
+from Move import Move
+
 class Player:
     def __init__(self, name, strategy):
         """
@@ -117,18 +119,24 @@ class Player:
         if self.hand:
             for card in self.hand:
                 # Check if the card has a specific target
-                if card.name == "Guard" or card.name == "Baron" or card.name == "Priest" or card.name == "King":
-                    # Get a list of targetable players
+                if card.name == "Guard":
                     targetable_players = [p for p in all_players if p != self and p.reachable and p.hand]
                     for target_player in targetable_players:
-                        possible_moves.append((card, target_player))
+                        for character in ['Spy', 'Priest', 'Baron', 'Handmaid', 'Prince', 'Chancellor', 'King', 'Countess', 'Princess']:
+                            possible_moves.append(Move(card, target_player, character, None))
+                elif card.name == "Priest" or card.name == "Baron" or card.name == "King":
+                    targetable_players = [p for p in all_players if p != self and p.reachable and p.hand]
+                    for target_player in targetable_players:
+                        possible_moves.append(Move(card, target_player, None, None))
                 elif card.name == "Prince":
-                    # Get a list of targetable players
                     targetable_players = [p for p in all_players if p.reachable and p.hand]
                     for target_player in targetable_players:
-                        possible_moves.append((card, target_player))
+                        possible_moves.append(Move(card, target_player, None, None))
+                elif card.name == "Chancellor":
+                    for character in ['Spy', 'Guard', 'Priest', 'Baron', 'Handmaid', 'Prince', 'Chancellor', 'King', 'Countess', 'Princess']:
+                        possible_moves.append(Move(card, None, None, character))
                 else:
-                    possible_moves.append((card, -1))
+                    possible_moves.append(Move(card, None, None, None))
 
         return possible_moves
 

@@ -139,6 +139,7 @@ class LoveLetterGame:
             "Prince": self.effect_prince,
             "Chancellor": self.effect_chancellor,
             "King": self.effect_king,
+            "Countess": self.effect_countess,
             "Princess": self.effect_princess
         }.get(card_name, None)
     
@@ -253,6 +254,12 @@ class LoveLetterGame:
             return
 
         self.exchange_cards(self.active_player, target_player)
+
+    def effect_countess(self):
+        """
+        Effect of the Countess card: no additional effect.
+        """
+        pass
 
 
     def effect_princess(self):
@@ -426,9 +433,9 @@ class LoveLetterGame:
         has_card = 0
         num_card = 2
         for c in player.hand:
-            if c.name == card.name:
+            if c.name == card:
                 has_card += 1
-        match card.name:
+        match card:
             case "Guard":
                 num_card = 6
             case "King":
@@ -438,7 +445,7 @@ class LoveLetterGame:
             case "Princess":
                 num_card = 1
 
-        probability_card = ( num_card - self.discarded_cards.get(card.name, 0) - len(player.get_players_with_known_card(card.name, self.players) - has_card)) \
+        probability_card = ( num_card - self.discarded_cards.get(card, 0) - len(player.get_players_with_known_card(card, self.players) - has_card)) \
                            / (len(self.deck.draw_pile) + len(player.get_players_with_unknown_card(self.players)))
 
         return probability_card

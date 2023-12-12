@@ -14,4 +14,4 @@ class Card:
         """
         Return a string representation of the card.
         """
-        return f"Card {self.name} with value {self.value}"
+        return f"Card {self.name} ({self.value})"
