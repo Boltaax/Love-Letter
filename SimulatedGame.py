@@ -12,36 +12,44 @@ class LoveLetterSimulatedGame(LoveLetterGame):
         self.spy_count = original_game.spy_count
         self.verbose = False  # Set to True for debugging if needed
 
-    def simulate_play_card(self, player, move):
+    def simulate_player_turn(self, player, move):
         """
-        Simulate the effects of a player playing a card.
+        Simulate a player's turn.
 
-        :param player: The player who is playing the card.
-        :param move: The move the player is playing.
+        :param player: The player whose turn is being simulated.
+        :param move: The move the player is making.
 
-        :return: The simulated game state after playing the card.
+        :return: The simulated game state after the player's turn.
         """
         # Create a deep copy of the current game state
         simulated_game = deepcopy(self)
 
-        print(f"Simulated played moove : card: {move.card} target: ({move.target}) character: {move.character} keep: {move.keep}")
-
         # Find the player in the simulated game
         simulated_player = next(p for p in simulated_game.players if p.name == player.name)
 
-        played_card = next(card for card in simulated_player.hand if card.name == move.card.name)
-
-        # Remove the played card from the player's hand
-        simulated_player.hand.remove(played_card)
-
-        # Simulate the effect of the played card
-        simulated_game.resolve_effect(move)
+        # Simulate the effect of the player's turn
+        simulated_game.resolve_player_turn(simulated_player, move)
 
         # Check if the round should end
         if simulated_game.is_round_end():
             simulated_game.end_of_round()
 
         return simulated_game
+
+    def resolve_player_turn(self, player, move):
+        """
+        Resolve the effects of a player's turn.
+
+        :param player: The player whose turn is being resolved.
+        :param move: The move the player is making.
+        """
+        if move.card:
+            print(f"Simulated player: {player}")
+            print(f"Simulated played moove : card: {move.card} target: ({move.target}) character: {move.character} keep: {move.keep}")
+            played_card = next(card for card in player.hand if card.name == move.card.name)
+            player.hand.remove(played_card)
+            self.resolve_effect(move)
+
 
     def resolve_effect(self, move):
         """
@@ -50,7 +58,10 @@ class LoveLetterSimulatedGame(LoveLetterGame):
         effect_method = self.get_effect_method(move)
 
         if effect_method:
-            effect_method()
+            if move.card.name == "Spy" or move.card.name == "Handmaid" or move.card.name == "Countess" or move.card.name == "Princess":
+                effect_method()
+            else:
+                effect_method(move)
 
     def get_effect_method(self, move):
         """
@@ -58,13 +69,13 @@ class LoveLetterSimulatedGame(LoveLetterGame):
         """
         return {
             "Spy": self.effect_spy,
-            "Guard": self.effect_guard_s(move),
-            "Priest": self.effect_priest_s(move),
-            "Baron": self.effect_baron_s(move),
+            "Guard": self.effect_guard_s,
+            "Priest": self.effect_priest_s,
+            "Baron": self.effect_baron_s,
             "Handmaid": self.effect_handmaid,
-            "Prince": self.effect_prince_s(move),
-            "Chancellor": self.effect_chancellor_s(move),
-            "King": self.effect_king_s(move),
+            "Prince": self.effect_prince_s,
+            "Chancellor": self.effect_chancellor_s,
+            "King": self.effect_king_s,
             "Countess": self.effect_countess,
             "Princess": self.effect_princess
         }.get(move.card.name, None)
@@ -73,6 +84,7 @@ class LoveLetterSimulatedGame(LoveLetterGame):
         """
         Effect of the Guard card: guess a character, if correct, the target player is eliminated from the round.
         """
+
         target_player = move.target
         if not target_player:
             self.log("No player is targetable, the card has no effect!")
@@ -91,6 +103,7 @@ class LoveLetterSimulatedGame(LoveLetterGame):
         """
         Effect of the Priest card: look at the target player's card.
         """
+
         target_player = move.target
         if target_player:
             self.log(f"{self.active_player.name} chooses {target_player.name} as target and looks at {target_player.card().name}")
@@ -103,11 +116,11 @@ class LoveLetterSimulatedGame(LoveLetterGame):
         Effect of the Baron card: compare the target player's card with the current player's card.
         The player with the lower value card is eliminated from the round.
         """
+
         target_player = move.target
         if not target_player:
             self.log("No player is targetable, the card has no effect!")
             return
-
         current_player_card = self.active_player.card()
         target_player_card = target_player.card()
         self.log_duel_info(current_player_card, target_player_card)
@@ -123,6 +136,7 @@ class LoveLetterSimulatedGame(LoveLetterGame):
         """
         Effect of the Prince card: the target player discards his/her card and draws a new one.
         """
+
         target_player = move.target
         if not target_player or not self.deck.draw_pile:
             self.log("No player is targetable, or deck is empty. The card has no effect!")
@@ -136,6 +150,7 @@ class LoveLetterSimulatedGame(LoveLetterGame):
         Effect of the Chancellor card: the current player draws 2 cards from the deck.
         One of the cards is kept, the others are returned to the deck.
         """
+
         if len(self.deck.draw_pile) < 2:
             self.log("Not enough cards in the deck to draw.")
             return
@@ -151,6 +166,7 @@ class LoveLetterSimulatedGame(LoveLetterGame):
         """
         Effect of the King card: the current player exchanges his/her card with the target player's card.
         """
+
         target_player = move.target
         if not target_player:
             self.log("No player is targetable, the card has no effect!")
@@ -158,7 +174,7 @@ class LoveLetterSimulatedGame(LoveLetterGame):
 
         self.exchange_cards(self.active_player, target_player)
 
-    def get_possible_moves(self, card, all_players, player):
+    def get_possible_moves(self, all_players, player):
         """
         Get a list of possible moves for the player in the current game state.
 
@@ -173,32 +189,32 @@ class LoveLetterSimulatedGame(LoveLetterGame):
                  and 'target' is the target player or -1 (no specific target).
         """
         possible_moves = []
-
-        # Check if the card has a specific target
-        if card.name == "Guard":
-            targetable_players = [p for p in all_players if p != player and p.reachable and p.hand]
-            if targetable_players:
-                for target_player in targetable_players:
-                    for character in ['Spy', 'Priest', 'Baron', 'Handmaid', 'Prince', 'Chancellor', 'King', 'Countess', 'Princess']:
-                        possible_moves.append(Move(card, target_player, character, None))
-            else:
-                possible_moves.append(Move(card, None, None, None))
-        elif card.name == "Priest" or card.name == "Baron" or card.name == "King":
-            targetable_players = [p for p in all_players if p != player and p.reachable and p.hand]
-            if targetable_players:
+        for card in player.hand:
+            # Check if the card has a specific target
+            if card.name == "Guard":
+                targetable_players = [p for p in all_players if p != player and p.reachable and p.hand]
+                if targetable_players:
+                    for target_player in targetable_players:
+                        for character in ['Spy', 'Priest', 'Baron', 'Handmaid', 'Prince', 'Chancellor', 'King', 'Countess', 'Princess']:
+                            possible_moves.append(Move(card, target_player, character, None))
+                else:
+                    possible_moves.append(Move(card, None, None, None))
+            elif card.name == "Priest" or card.name == "Baron" or card.name == "King":
+                targetable_players = [p for p in all_players if p != player and p.reachable and p.hand]
+                if targetable_players:
+                    for target_player in targetable_players:
+                        possible_moves.append(Move(card, target_player, None, None))
+                else:
+                    possible_moves.append(Move(card, None, None, None))
+            elif card.name == "Prince":
+                targetable_players = [p for p in all_players if p.reachable and p.hand]
                 for target_player in targetable_players:
                     possible_moves.append(Move(card, target_player, None, None))
+            elif card.name == "Chancellor":
+                for i in range(3):
+                    possible_moves.append(Move(card, None, None, i))
             else:
                 possible_moves.append(Move(card, None, None, None))
-        elif card.name == "Prince":
-            targetable_players = [p for p in all_players if p.reachable and p.hand]
-            for target_player in targetable_players:
-                possible_moves.append(Move(card, target_player, None, None))
-        elif card.name == "Chancellor":
-            for i in range(3):
-                possible_moves.append(Move(card, None, None, i))
-        else:
-            possible_moves.append(Move(card, None, None, None))
 
         return possible_moves
 

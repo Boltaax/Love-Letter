@@ -87,55 +87,55 @@ class RandomStrategy(PlayerStrategy):
 
 
 class MinMaxStrategy(PlayerStrategy):
-    def __init__(self, depth=10):
+    def __init__(self, depth=3):
         self.depth = depth
+        self.original_player = None  # Ajout de la variable pour stocker le joueur d'origine
 
     def choose_card_to_play(self, player, game):
+        self.original_player = player  # Stocker le joueur d'origine
         simulated_game = LoveLetterSimulatedGame(original_game=game)
-        best_move = self.expectiminimax(player, simulated_game, self.depth, True)
+        best_move = self.expectiminimax(simulated_game, self.depth, True)
         return best_move.card  # Retourne la carte du meilleur mouvement
 
     def choose_target_player(self, player, players, game):
         simulated_game = LoveLetterSimulatedGame(original_game=game)
-        best_move = self.expectiminimax(player, simulated_game, self.depth, True)
+        best_move = self.expectiminimax(simulated_game, self.depth, True)
         return best_move.target  # Retourne la cible du meilleur mouvement
 
     def choose_character(self, player, characters, game):
         simulated_game = LoveLetterSimulatedGame(original_game=game)
-        best_move = self.expectiminimax(player, simulated_game, self.depth, True)
+        best_move = self.expectiminimax(simulated_game, self.depth, True)
         return best_move.character  # Retourne le personnage à deviner du meilleur mouvement
 
     def keep_card(self, player, cards, game):
         simulated_game = LoveLetterSimulatedGame(original_game=game)
-        best_move = self.expectiminimax(player, simulated_game, self.depth, True)
+        best_move = self.expectiminimax(simulated_game, self.depth, True)
         return best_move.keep  # Retourne la carte à garder du meilleur mouvement
 
-    def expectiminimax(self, player, simulated_board, depth, maximizing_player):
+    def expectiminimax(self, simulated_board, depth, maximizing_player):
+        player = simulated_board.active_player
+
         if depth == 0 or simulated_board.is_round_over():
-            return self.evaluate_board(player, simulated_board.players, simulated_board)
+            return self.evaluate_board(self.original_player, simulated_board.players, simulated_board)
 
         if maximizing_player:
             max_eval = float('-inf')
             best_move = None
 
-            for possible_card in player.hand:
-                move_combinations = simulated_board.get_possible_moves(possible_card, simulated_board.players, player)
-                for move in move_combinations:
-                    next_board = simulated_board.simulate_play_card(player, move)
-                    eval = self.expectiminimax(player, next_board, depth - 1, False)
-                    if eval > max_eval:
-                        max_eval = eval
-                        best_move = move
+            for possible_move in simulated_board.get_possible_moves(simulated_board.players, player):
+                next_board = simulated_board.simulate_player_turn(player, possible_move)
+                eval = self.expectiminimax(next_board, depth - 1, False)
+                if eval > max_eval:
+                    max_eval = eval
+                    best_move = possible_move
             return best_move
         else:
             min_eval = float('inf')
 
-            for possible_card in player.hand:
-                move_combinations = simulated_board.get_possible_moves(possible_card, simulated_board.players, player)
-                for move in move_combinations:
-                    next_board = simulated_board.simulate_play_card(player, move)
-                    eval = self.expectiminimax(player, next_board, depth - 1, True)
-                    min_eval = min(min_eval, eval)
+            for possible_move in simulated_board.get_possible_moves(simulated_board.players, player):
+                next_board = simulated_board.simulate_player_turn(player, possible_move)
+                eval = self.expectiminimax(next_board, depth - 1, True)
+                min_eval = min(min_eval, eval)
             return min_eval
 
     def evaluate_board(self, player, players, simulated_board):

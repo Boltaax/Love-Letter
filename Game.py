@@ -149,6 +149,7 @@ class LoveLetterGame:
         Effect of the Spy card: no active effect.
         The only remaining player to have played or discarded a spy, if any, wins 1 bonus point.
         """
+
         current_player = self.active_player
         current_player.has_played_or_discarded_spy = True
 
@@ -337,11 +338,15 @@ class LoveLetterGame:
         """
         card1 = player1.card()
         card2 = player2.card()
+
         self.log(f"{player1.name} and {player2.name} exchange their cards.")
         player1.hand.remove(card1)
         player2.hand.remove(card2)
         player1.hand.append(card2)
         player2.hand.append(card1)
+
+        player1.remember_card(player2, card1, 0)
+        player1.remember_card(player1, card2, 0)
 
 
     def end_of_round(self):
@@ -368,6 +373,8 @@ class LoveLetterGame:
         Award points to the winner(s) of the round.
         """
         for player in winners:
+            if player not in self.points:
+                self.points[player] = 0
             self.points[player] += 1
             self.log(f"{player.name} wins the round and gets 1 point!")
 
