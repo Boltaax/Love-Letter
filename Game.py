@@ -40,7 +40,6 @@ class LoveLetterGame:
         for current_player in self.players:
             self.active_player = current_player
             if self.is_round_end():
-
                 self.end_of_round()
                 break
 
@@ -242,7 +241,10 @@ class LoveLetterGame:
 
         card_to_keep = self.active_player.keep_card(drawn_cards, self)
         self.log(f"{self.active_player.name} keeps the {card_to_keep.name} card ({card_to_keep.value}).")
+
+        drawn_cards.append(self.active_player.hand.pop())
         self.return_cards_to_deck(drawn_cards, card_to_keep)
+
 
 
     def effect_king(self):
@@ -327,8 +329,7 @@ class LoveLetterGame:
         Return the cards to the deck, except the one the player chose to keep.
         """
         cards_to_return = [card for card in drawn_cards if card != card_to_keep]
-        if card_to_keep not in self.active_player.hand:
-            cards_to_return.append(self.active_player.hand.pop())
+        self.active_player.hand.append(card_to_keep)
         self.deck.draw_pile.extend(cards_to_return)
 
 
