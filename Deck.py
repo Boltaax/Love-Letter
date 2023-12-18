@@ -46,3 +46,6 @@ class Deck:
             return self.draw_pile.pop()
         else:
             return None
+
+    def __str__(self):
+        return f"{', '.join(card.name for card in self.draw_pile)}"

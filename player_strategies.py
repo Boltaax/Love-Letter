@@ -130,13 +130,23 @@ class MinMaxStrategy(PlayerStrategy):
                     best_move = possible_move
             return best_move
         else:
-            min_eval = float('inf')
+            weighted_evals = 0
+            total_probability = 0
 
             for possible_move in simulated_board.get_possible_moves(simulated_board.players, player):
                 next_board = simulated_board.simulate_player_turn(player, possible_move)
-                eval = self.expectiminimax(next_board, depth - 1, True)
-                min_eval = min(min_eval, eval)
-            return min_eval
+
+                if self.random_event_at_node(next_board):
+                    # Return weighted average of all child nodes' values
+                    probability = self.probability_of_random_event(next_board)
+                    weighted_evals += probability * self.expectiminimax(next_board, depth - 1, maximizing_player)
+                    total_probability += probability
+                else:
+                    eval = self.expectiminimax(next_board, depth - 1, True)
+                    weighted_evals += eval
+                    total_probability += 1
+
+            return weighted_evals / total_probability if total_probability != 0 else 0
 
     def evaluate_board(self, player, players, simulated_board):
         # TODO: Implement a heuristic evaluation function to evaluate the current game state
@@ -170,5 +180,62 @@ class MinMaxStrategy(PlayerStrategy):
 
     def probability_draw_card(self, player, card, game):
         return game.probability_draw_cards(player, card)
+
+    def probability_of_random_event(self, simulated_board):
+        total_probability = 0
+
+        for possible_move in simulated_board.get_possible_moves(simulated_board.players, simulated_board.active_player):
+            move_probability = self.calculate_move_probability(simulated_board, possible_move)
+            total_probability += move_probability * self.calculate_move_weight(simulated_board, possible_move)
+
+        return total_probability
+
+    def calculate_move_probability(self, simulated_board, possible_move):
+        # Calculate the probability of success for a specific move
+
+        # Example: Probability of drawing a specific card
+        card_to_draw = self.get_card_to_draw(simulated_board, possible_move)
+        probability_draw = self.probability_draw_card(simulated_board.active_player, card_to_draw, simulated_board)
+
+        # Example: Probability of guessing correctly
+        if possible_move.card.name == "Guard":
+            probability_guess = self.probability_of_correct_guess(simulated_board, possible_move)
+        else:
+            probability_guess = 1  # Assume non-Guard cards always guess correctly
+
+        # You can add more factors based on your game rules
+
+        return probability_draw * probability_guess
+
+    def get_card_to_draw(self, simulated_board, possible_move):
+        # Determine the card that needs to be drawn for the move
+        # Example: For Prince card, the card to draw is the target player's card
+        if possible_move.card.name == "Prince":
+            return possible_move.target.card().name
+        # Add more cases for other cards as needed
+        else:
+            return None  # No specific card needed
+
+    def probability_of_correct_guess(self, simulated_board, possible_move):
+        # Calculate the probability of guessing correctly for Guard card
+
+        # Example: If the target player has a known card, calculate the probability of guessing it
+        target_player = possible_move.target
+        if target_player and target_player.name in simulated_board.active_player.memory:
+            guessed_card = possible_move.character
+            actual_card = target_player.memory[target_player.name].name
+            if guessed_card == actual_card:
+                return 1  # Correct guess
+            else:
+                return 0  # Incorrect guess
+        else:
+            # If the target player's card is unknown, you might use a default probability
+            return 1 / len(simulated_board.deck)  # Adjust as needed
+
+    def calculate_move_weight(self, simulated_board, possible_move):
+        # Calculate a weight for the move based on its likelihood of occurring
+        # This can be based on the importance of the move, number of possible moves, etc.
+        # You might need to fine-tune this based on your game dynamics
+        return 1  # Placeholder value; adjust as needed
 
 

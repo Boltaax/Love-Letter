@@ -26,10 +26,13 @@ class LoveLetterSimulatedGame(LoveLetterGame):
 
         # Find the player in the simulated game
         simulated_player = next(p for p in simulated_game.players if p.name == player.name)
+        simulated_player.hand = player.hand.copy()
+        simulated_game.active_player = simulated_player
 
         # Simulate the effect of the player's turn
         simulated_game.resolve_player_turn(simulated_player, move)
 
+        print(self)
         # Check if the round should end
         if simulated_game.is_round_end():
             simulated_game.end_of_round()
@@ -217,4 +220,7 @@ class LoveLetterSimulatedGame(LoveLetterGame):
                 possible_moves.append(Move(card, None, None, None))
 
         return possible_moves
+
+    def __str__(self):
+        return f"Game | deck: {self.deck} | discard: {self.discarded_cards} | active player: {self.active_player} | players: {', '.join(str(player) for player in self.players)}"
 
