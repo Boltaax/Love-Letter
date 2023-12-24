@@ -32,6 +32,32 @@ class LoveLetterGame:
         for player in self.players:
             player.draw(self.deck.draw())
 
+    def draw_memory(self, player, drawn_card):
+        """
+            :param player : the player who draws a card
+
+            :param drawn_card : the card that were drawn
+
+            Récupère dans la mémoire de chaque joueur la carte en position 0 du deck et l'ajoute à la clé 'player.name'
+            en dernière position de la main de sa main
+            Ensuite, pour chaque joueur, décale de -1 la position de chaque carte du deck dans la mémoire
+        """
+
+        # Update memory for each player
+        for p in self.players:
+            if p != player:
+                # Add the drawn card to the player's memory at last position
+                p.memory[player.name] = [{'card': drawn_card.name, 'position': len(player.hand)}]
+            # Shift cards in memory by -1
+            p.memory["deck"] = [{'card': info['card'], 'position': info['position'] - 1} for info in p.memory["deck"]]
+
+            # Check if the draw pile size has decreased
+            if len(self.deck.draw_pile) < len(player.memory["deck"]):
+                p.memory["deck"].pop(-1)
+
+
+
+
 
     def play_turn(self):
         """
@@ -85,6 +111,7 @@ class LoveLetterGame:
         # Player draws a card from the deck
         drawn_card = self.deck.draw()
         player.draw(drawn_card)
+        self.draw_memory(player, drawn_card)
         if self.verbose:
             print(f"{player.name} draws a card.")
 
@@ -111,6 +138,7 @@ class LoveLetterGame:
         for card in player.hand:
             if card.name == "Countess":
                 player.hand.remove(card)
+                player.erase_memory(self.players, card)
                 if self.verbose:
                     print(f"{player.name} is forced to play the Countess card.")
                 break
@@ -237,6 +265,8 @@ class LoveLetterGame:
             return
 
         drawn_cards = [self.deck.draw(), self.deck.draw()]
+        for c in drawn_cards:
+            self.draw_memory(self.active_player, c)
         self.log(f"{self.active_player.name} draws {len(drawn_cards)} card(s): {[card.name for card in drawn_cards]}")
 
         card_to_keep = self.active_player.keep_card(drawn_cards, self)
@@ -290,7 +320,6 @@ class LoveLetterGame:
         self.log(f"Target player has the {card2.name} card ({card2.value}).")
 
 
-    # Helper Methods for effects
     def eliminate_player(self, player):
         """
         Eliminate the given player from the round.
@@ -346,8 +375,8 @@ class LoveLetterGame:
         player1.hand.append(card2)
         player2.hand.append(card1)
 
-        player1.remember_card(player2, card1, 0)
-        player1.remember_card(player1, card2, 0)
+        player1.remember_card(player2, card1)
+        player1.remember_card(player1, card2)
 
 
     def end_of_round(self):
@@ -418,6 +447,7 @@ class LoveLetterGame:
         """
         for player in self.players:
             player.hand = []
+            self.initiate_memory(player)
             player.has_played_or_discarded_spy = False
             player.reachable = True
 
@@ -457,3 +487,20 @@ class LoveLetterGame:
                            / (len(self.deck.draw_pile) + len(player.get_players_with_unknown_card(self.players)))
 
         return probability_card
+
+    def initiate_memory(self, player):
+        """
+                Reset the memory for a player.
+
+                :param player: The player to initialize the memory
+
+                """
+        player.memory = {}
+        for p in self.players:
+            if p != player:
+                player.memory[p.name] = [{'card': "unknown", 'position': pos} for pos in range(4)]
+
+        player.memory["deck"] = [{'card': 'unknown', 'position': pos} for pos in range(len(self.deck.draw_pile))]
+
+        print(f"{player.name} memory : {player.memory}")
+

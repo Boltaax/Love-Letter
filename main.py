@@ -47,6 +47,8 @@ def play_game(players, verbose=False):
     """
     game = LoveLetterGame(players, verbose=verbose)
     game.distribute_cards()
+    for p in game.players:
+        game.initiate_memory(p)
 
     while max(game.points.values()) < game.target_points:
         game.play_turn()

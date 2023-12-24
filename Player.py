@@ -148,7 +148,7 @@ class Player:
         :param card: The card that the player saw.
         :param position: The position of the card in the deck (default is 0 for player).
         """
-        self.memory[player] = {'card': card, 'position': position}
+        self.memory[player] = {'card': card.name, 'position': position}
 
     def get_memory(self, player):
         """
@@ -158,7 +158,7 @@ class Player:
 
         :return: A dictionary with the remembered card and position of the card in the deck (or hand).
         """
-        return self.memory.get(player, {'card': None, 'position': None})
+        return self.memory.get(player, {})
 
     def erase_memory(self, players, card):
         """
@@ -167,10 +167,17 @@ class Player:
         :param players: The list of players to erase the memory for.
         :param card: The card to be erased from the memory.
         """
-        for p in players:
-            player_memory = p.memory.get(self.name, {})
-            if card in player_memory:
-                del player_memory[card]
+        # Parcourir tous les joueurs
+        for player in players:
+            if player != self:
+                # Vérifier si le joueur a une mémoire pour le joueur actuel
+                if self.name in player.memory:
+                    # Vérifier si la carte est présente dans la mémoire du joueur actuel
+                    if self.memory[self.name]['card'] == card.name:
+                        # Supprimer la carte de la mémoire
+                        self.memory[self.name]['card'] = "unknown"
+                        # Sortir de la boucle après avoir supprimé la première occurrence
+                        break
 
     def get_players_with_known_card(self, card_name, players):
         """

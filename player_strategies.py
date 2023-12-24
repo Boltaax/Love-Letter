@@ -96,7 +96,8 @@ class MinMaxStrategy(PlayerStrategy):
     def choose_card_to_play(self, player, game):
         self.original_player = player  # Stocker le joueur d'origine
         simulated_game = LoveLetterSimulatedGame(game, player)
-        self.best_move = self.minimax(simulated_game, self.depth, True)
+        pov_player = self.copy_player_view(player, simulated_game)
+        self.best_move = self.minimax(pov_player, self.depth, True)
         return self.best_move.card  # Retourne la carte du meilleur mouvement
 
     def choose_target_player(self, player, players, game):
