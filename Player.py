@@ -13,7 +13,8 @@ class Player:
         self.reachable = True
         self.strategy = strategy
         self.has_played_or_discarded_spy = False
-        self.memory = {}
+        self.player_memory = []
+        self.deck_memory = []
 
 
     def draw(self, card):
@@ -140,62 +141,25 @@ class Player:
 
         return possible_moves
 
-    def remember_card(self, player, card, position=0):
+    def remember_player_card(self, card):
         """
         Remember a card that the player saw in another player's hand.
 
-        :param player: The name of the other player.
         :param card: The card that the player saw.
-        :param position: The position of the card in the deck (default is 0 for player).
+
         """
-        self.memory[player] = {'card': card.name, 'position': position}
+        self.player_memory.append(card)
 
-    def get_memory(self, player):
-        """
-        Get the remembered card and position of a specific player.
-
-        :param player: The name of the player to retrieve the memory for (deck if it's the deck).
-
-        :return: A dictionary with the remembered card and position of the card in the deck (or hand).
-        """
-        return self.memory.get(player, {})
-
-    def erase_memory(self, players, card):
+    def forget_player_card(self, card):
         """
         Erase the card from the memory of all players
 
-        :param players: The list of players to erase the memory for.
         :param card: The card to be erased from the memory.
         """
-        # Parcourir tous les joueurs
-        for player in players:
-            if player != self:
-                # Vérifier si le joueur a une mémoire pour le joueur actuel
-                if self.name in player.memory:
-                    # Vérifier si la carte est présente dans la mémoire du joueur actuel
-                    if self.memory[self.name]['card'] == card.name:
-                        # Supprimer la carte de la mémoire
-                        self.memory[self.name]['card'] = "unknown"
-                        # Sortir de la boucle après avoir supprimé la première occurrence
-                        break
+        for c in self.player_memory:
+            if card.name == c.name:
+                self.player_memory.remove(card)
 
-    def get_players_with_known_card(self, card_name, players):
-        """
-        Get the list of players who have a known specific card.
-
-        :param card_name: The name of the card to check.
-
-        :return: A list of players with the known card.
-        """
-        return [p for p in players if p.get_memory(p.name)['card'].name == card_name and p.hand and p != self]
-
-    def get_players_with_unknown_card(self, players):
-        """
-        Get the list of players who have unknown cards.
-
-        :return: A list of players with unknown cards.
-        """
-        return [p for p in players if p.get_memory(p.name)['card'] is None and p.hand and p != self]
 
 
     def __str__(self):

@@ -1,9 +1,12 @@
+import random
+
 from Player import Player
 from Game import LoveLetterGame
 from tqdm import tqdm
 from player_strategies import get_strategies
 
 global game
+
 
 def create_players(number_of_players):
     """
@@ -47,8 +50,6 @@ def play_game(players, verbose=False):
     """
     game = LoveLetterGame(players, verbose=verbose)
     game.distribute_cards()
-    for p in game.players:
-        game.initiate_memory(p)
 
     while max(game.points.values()) < game.target_points:
         game.play_turn()
@@ -58,7 +59,8 @@ def play_game(players, verbose=False):
 
 # Main script
 if __name__ == "__main__":
-    number_of_players = int(input("Enter the number of players (2-6): "))
+    number_of_players = 2
+    print("The number of players in the game is fixed to 2.")
     number_of_games = int(input("Enter the number of games to play: "))
 
     # Determine verbosity based on the number of games

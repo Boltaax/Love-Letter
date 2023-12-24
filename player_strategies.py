@@ -95,9 +95,9 @@ class MinMaxStrategy(PlayerStrategy):
 
     def choose_card_to_play(self, player, game):
         self.original_player = player  # Stocker le joueur d'origine
-        simulated_game = LoveLetterSimulatedGame(game, player)
-        pov_player = self.copy_player_view(player, simulated_game)
-        self.best_move = self.minimax(pov_player, self.depth, True)
+        simulated_game = LoveLetterSimulatedGame(game)
+        pov_player = self.copy_player_view(simulated_game)
+        self.best_move = self.expectiminimax(pov_player, self.depth, True)
         return self.best_move.card  # Retourne la carte du meilleur mouvement
 
     def choose_target_player(self, player, players, game):
@@ -109,71 +109,89 @@ class MinMaxStrategy(PlayerStrategy):
     def keep_card(self, player, cards, game):
         return self.best_move.keep  # Retourne la carte à garder du meilleur mouvement
 
-    def copy_player_view(self, original_player, simulated_board):
+    def copy_player_view(self, simulated_board):
         # Crée une copie de l'état du jeu en tenant compte des informations du joueur
         copied_board = deepcopy(simulated_board)  # Commence par une copie profonde
 
-        # Met à jour les informations du joueur actif avec les données que le joueur connaît
+        # Met à jour les informations avec les données que le joueur actif connaît
         active_player = copied_board.active_player
-        active_player_memory = copied_board.players[active_player]['memory']
 
         for player in copied_board.players:
-            if player == active_player:
-                # Copie uniquement les informations pertinentes pour le joueur actif
-                active_player_memory[player] = {'card': simulated_board.players[player]['memory']['card']}
-            else:
-                # Les autres joueurs voient la carte comme "inconnue"
-                active_player_memory[player] = {'card': 'unknown', 'position': 'unknown'}
+            if player != active_player:
+                player.hand = [0]
+                player.deck_memory = ['unknown'] * len(copied_board.deck.draw_pile)
 
         return copied_board
 
-    def minimax(self, simulated_board, depth, maximizing_player):
-        player = simulated_board.active_player
-        print("Depth:", depth)
+    def expectiminimax(self, game, depth, maximizing_player):
+        #TODO : Initialiser une partie avec les mêmes caractéristiques mais toutes les cartes non connues à l'init deviennent
+        # des cartes 'unknown' qui lorsqu'elles sont piochées peuvent devenir n'importe laquelle des cartes possiblement piochables
+        # (p > 0) il faut garder la probabilité de chaque carte pour multiplier chaque proba entre elles et le poids de chaque moove
+        # est calculé à la fin avec evaluate_board qui donne un score, eval = proba_totale*score et si celle-ci est la plus élevée
+        # elle est gardée et le moove qui a provoqué ceci est gardé en tant que best_moove.
 
-        if depth == 0 or simulated_board.is_round_over():
-            return self.evaluate_board(self.original_player, simulated_board.players, simulated_board)
+        if depth == 0 or game.is_round_over():
+            return self.evaluate_board(game)
+
         if maximizing_player:
             max_eval = float('-inf')
             best_move = None
-            for possible_move in simulated_board.get_possible_moves(simulated_board.players, player):
-                copy_board = deepcopy(simulated_board)  # Utilise deepcopy ici
-                next_board = copy_board.simulate_player_turn(player, possible_move)
-                eval = self.minimax(next_board, depth - 1, False)
+
+            for possible_move in game.get_possible_moves(self):
+
+
+                next_game = game.simulate_player_turn(self, possible_move)
+                eval = self.expectiminimax(next_game, depth - 1, False)
                 if eval > max_eval:
                     max_eval = eval
                     best_move = possible_move
-            self.best_move = best_move
             return best_move
         else:
-            min_eval = float('inf')
-            for possible_move in simulated_board.get_possible_moves(simulated_board.players, player):
-                copy_board = deepcopy(simulated_board)  # Utilise deepcopy ici
-                next_board = copy_board.simulate_player_turn(player, possible_move)
-                eval = self.minimax(next_board, depth - 1, True)
-                min_eval = min(min_eval, eval)
-            return min_eval
+            weighted_evals = 0
+            total_probability = 0
 
-    def evaluate_board(self, player, players, simulated_board):
+            for possible_move in game.get_possible_moves(self):
+
+                next_game = game.simulate_player_turn(self, possible_move)
+
+                if self.random_event_at_node(next_game):
+                    probability = self.probability_of_random_event(next_game)
+                    weighted_evals += probability * self.expectiminimax(next_game, depth - 1, maximizing_player)
+                    total_probability += probability
+                else:
+                    eval = self.expectiminimax(next_game, depth - 1, True)
+                    weighted_evals += eval
+                    total_probability += 1
+
+            return weighted_evals / total_probability if total_probability != 0 else 0
+
+    def random_event_at_node(self, game):
+        # TODO: Implémentez votre fonction pour déterminer s'il y a un événement aléatoire à ce nœud du jeu
+        pass
+
+    def probability_of_random_event(self, game):
+        # TODO: Implémentez votre fonction pour calculer la probabilité de l'événement aléatoire à ce nœud du jeu
+        pass
+
+    def evaluate_board(self, simulated_board):
         # TODO: Implement a heuristic evaluation function to evaluate the current game state
         evaluation_score = 0
         # Check if the current player has been eliminated
-        if not player.hand:
+        if not self.original_player.hand:
             evaluation_score -= 10000  # Deduct a high score for being eliminated
-            for p in players:
-                if p != player and p.hand:
-                    evaluation_score += (simulated_board.points[player] - simulated_board.points[p]) * 1000
+            for p in simulated_board.players:
+                if p != simulated_board.players and p.hand:
+                    evaluation_score += (simulated_board.points[self.original_player] - simulated_board.points[p]) * 1000
 
         # Check if any other player has been eliminated
-        for p in players:
-            if not p.hand and p != player:
-                evaluation_score += 500  # Add points for each player who has been eliminated
+        for p in simulated_board.players:
+            if not p.hand and p != simulated_board.players:
+                evaluation_score += 1000  # Add points for each player who has been eliminated
 
         # Check the number of cards in the player's memory
-        if 'memory' in player.__dict__:
-            for other_player in players:
-                if other_player != player and other_player.name != "deck":
-                    evaluation_score += 10 * other_player.card().value
+        if self.original_player.player_memory:
+            evaluation_score += 50 * self.original_player.player_memory
+
 
         # TODO: Implement a searching algorithm thanks to probability to give a score for each possibility that a player can win or not the game
         #  he will use the probability_draw_card method, and give for each player the probability that he will win thanks to the higher score card

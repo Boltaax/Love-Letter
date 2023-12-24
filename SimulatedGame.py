@@ -3,7 +3,7 @@ from Game import LoveLetterGame
 from Move import Move
 
 class LoveLetterSimulatedGame(LoveLetterGame):
-    def __init__(self, original_game, player):
+    def __init__(self, original_game):
         super().__init__(original_game.players)
         self.deck = deepcopy(original_game.deck)
         self.discarded_cards = deepcopy(original_game.discarded_cards)
@@ -23,6 +23,8 @@ class LoveLetterSimulatedGame(LoveLetterGame):
         """
         # Create a deep copy of the current game state
         simulated_game = deepcopy(self)
+        if simulated_game.is_round_end():
+            simulated_game.end_of_round()
 
         # Find the player in the simulated game
         simulated_player = next(p for p in simulated_game.players if p.name == player.name)
@@ -34,8 +36,6 @@ class LoveLetterSimulatedGame(LoveLetterGame):
 
         print(self)
         # Check if the round should end
-        if simulated_game.is_round_end():
-            simulated_game.end_of_round()
 
         return simulated_game
 
@@ -177,25 +177,22 @@ class LoveLetterSimulatedGame(LoveLetterGame):
 
         self.exchange_cards(self.active_player, target_player)
 
-    def get_possible_moves(self, all_players, player):
+    def get_possible_moves(self, player):
         """
         Get a list of possible moves for the player in the current game state.
 
-        :param card: the card that have all these possible moves
-
         :param player: the player whose it the turn to play.
-
-        :param all_players: A list of all players in the game.
 
         :return: A list of possible moves. Each move is represented as a tuple (action, card, target),
                  where 'action' is either 'play' or 'discard', 'card' is the card to be played or discarded,
-                 and 'target' is the target player or -1 (no specific target).
+                 and 'target' is the target player or None (no specific target).
         """
+        op = self.get_other_player(player)
         possible_moves = []
         for card in player.hand:
             # Check if the card has a specific target
             if card.name == "Guard":
-                targetable_players = [p for p in all_players if p != player and p.reachable and p.hand]
+                targetable_players = [op] if op.reachable and op.hand else []
                 if targetable_players:
                     for target_player in targetable_players:
                         for character in ['Spy', 'Priest', 'Baron', 'Handmaid', 'Prince', 'Chancellor', 'King', 'Countess', 'Princess']:
@@ -203,14 +200,14 @@ class LoveLetterSimulatedGame(LoveLetterGame):
                 else:
                     possible_moves.append(Move(card, None, None, None))
             elif card.name == "Priest" or card.name == "Baron" or card.name == "King":
-                targetable_players = [p for p in all_players if p != player and p.reachable and p.hand]
+                targetable_players = [op] if op.reachable and op.hand else []
                 if targetable_players:
                     for target_player in targetable_players:
                         possible_moves.append(Move(card, target_player, None, None))
                 else:
                     possible_moves.append(Move(card, None, None, None))
             elif card.name == "Prince":
-                targetable_players = [p for p in all_players if p.reachable and p.hand]
+                targetable_players = [p for p in self.players if p.reachable and p.hand]
                 for target_player in targetable_players:
                     possible_moves.append(Move(card, target_player, None, None))
             elif card.name == "Chancellor":
@@ -220,6 +217,70 @@ class LoveLetterSimulatedGame(LoveLetterGame):
                 possible_moves.append(Move(card, None, None, None))
 
         return possible_moves
+
+    def probability_ennemy_have_card(self, player, card_name):
+        """
+        Calculate a probability-based score for a player.
+
+        :param player: The player for whom to calculate the score.
+
+        :return: The calculated score based on probabilities.
+        """
+        has_card = 0
+        num_card = 2
+
+        for c in player.player_memory:
+            if c.name == card_name:
+                return 1
+
+        for c in player.hand:
+            if c.name == card_name:
+                has_card += 1
+        match card_name:
+            case "Guard":
+                num_card = 6
+            case "King":
+                num_card = 1
+            case "Countess":
+                num_card = 1
+            case "Princess":
+                num_card = 1
+
+        probability_card = (num_card - self.discarded_cards.get(card_name, 0) - has_card) / (len(self.deck.draw_pile) + 1)
+
+        return probability_card
+
+    def probability_draw_card(self, card_name, original_player):
+        """
+        Calculate a probability-based score for a player.
+
+        :param original_player: The player for whom to calculate the best move
+
+        :return: The calculated score based on probabilities.
+        """
+        if original_player.deck_memory[0].name == card_name:
+            return 1
+        has_card = 0
+        num_card = 2
+        for c in original_player.player_memory:
+            if c.name == card_name:
+                has_card += 1
+        for c in original_player.hand:
+            if c.name == card_name:
+                has_card += 1
+        match card_name:
+            case "Guard":
+                num_card = 6
+            case "King":
+                num_card = 1
+            case "Countess":
+                num_card = 1
+            case "Princess":
+                num_card = 1
+        probability_card = (num_card - self.discarded_cards.get(card_name, 0) - has_card) / (
+                    len(self.deck.draw_pile) + 1)
+        return probability_card
+
 
     def __str__(self):
         return f"Game | deck: {self.deck} | discard: {self.discarded_cards} | active player: {self.active_player} | players: {', '.join(str(player) for player in self.players)}"

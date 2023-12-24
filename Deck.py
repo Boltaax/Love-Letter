@@ -43,7 +43,7 @@ class Deck:
         :return: The drawn card, or None if the deck is empty.
         """
         if self.draw_pile:
-            return self.draw_pile.pop()
+            return self.draw_pile.pop(0)
         else:
             return None
 
