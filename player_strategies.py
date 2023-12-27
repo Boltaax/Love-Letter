@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from copy import deepcopy
 import random
 from SimulatedGame import LoveLetterSimulatedGame
+from Cards import Card
 from Move import Move
 
 
@@ -97,6 +98,9 @@ class MinMaxStrategy(PlayerStrategy):
         self.original_player = player  # Stocker le joueur d'origine
         simulated_game = LoveLetterSimulatedGame(game)
         pov_player = self.copy_player_view(simulated_game)
+
+        print(pov_player)
+
         self.best_move = self.expectiminimax(pov_player, self.depth, True)
         return self.best_move.card  # Retourne la carte du meilleur mouvement
 
@@ -117,8 +121,10 @@ class MinMaxStrategy(PlayerStrategy):
         active_player = copied_board.active_player
 
         for player in copied_board.players:
-            if player != active_player:
-                player.hand = [0]
+            if not copied_board.is_active_player(player):
+                if not active_player.player_memory:
+                    player.hand.pop()
+                    player.hand.append(Card('unknown', -1))
                 player.deck_memory = ['unknown'] * len(copied_board.deck.draw_pile)
 
         return copied_board

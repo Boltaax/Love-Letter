@@ -120,7 +120,8 @@ class LoveLetterGame:
                     print(f"{player.name} plays the {played_card.name} card.")
                 self.update_discarded_cards_count(played_card)
                 self.resolve_effect(played_card)
-                player.erase_memory(self.players, played_card)
+                op = self.get_other_player(player)
+                op.forget_player_card(played_card)
 
 
     
@@ -439,6 +440,8 @@ class LoveLetterGame:
         self.deck = Deck()
         self.deck.fill()
         self.deck.shuffle()
+        self.discarded_cards = {}
+        self.spy_count = 0
         self.reset_players_for_new_round()
         self.distribute_cards()
         self.active_player = self.players[0]
@@ -464,11 +467,19 @@ class LoveLetterGame:
         else:
             self.discarded_cards[card.name] = 1
 
+    def is_active_player(self, player):
+        return player.name == self.active_player.name
+
 
     def initiate_deck_memory(self):
         for player in self.players:
             player.deck_memory = ['unknown'] * len(self.deck.draw_pile)
 
+    def __str__(self):
+        return f"Game | deck: {self.deck} " \
+               f"discard: {self.discarded_cards} | " \
+               f"active player: {str(self.active_player)} | " \
+               f"players: {', '.join(str(player) for player in self.players)}"
 
 
 

@@ -9,7 +9,6 @@ class Card:
         self.name = name
         self.value = value
 
-
     def __str__(self):
         """
         Return a string representation of the card.

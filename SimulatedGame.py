@@ -282,6 +282,3 @@ class LoveLetterSimulatedGame(LoveLetterGame):
         return probability_card
 
 
-    def __str__(self):
-        return f"Game | deck: {self.deck} | discard: {self.discarded_cards} | active player: {self.active_player} | players: {', '.join(str(player) for player in self.players)}"
-

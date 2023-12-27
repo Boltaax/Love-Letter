@@ -166,4 +166,4 @@ class Player:
         """
         Return a string representation of the player.
         """
-        return f"{self.name} has the hand : {', '.join(card.name for card in self.hand)}"
+        return f"{self.name} has the hand: {', '.join(str(card) for card in self.hand)}"
