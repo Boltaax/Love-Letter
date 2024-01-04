@@ -118,7 +118,7 @@ class LoveLetterSimulatedGame(LoveLetterGame):
         target_player = move.target
         if target_player:
             self.log(f"{self.active_player.name} chooses {target_player.name} as target and looks at {target_player.card().name}")
-            self.active_player.remember_card(target_player.name, target_player.card())
+            self.active_player.remember_player_card(target_player.card())
         else:
             self.log("No player is targetable, the card has no effect!")
 
@@ -223,7 +223,7 @@ class LoveLetterSimulatedGame(LoveLetterGame):
                     possible_moves.append(Move(card, None, None, i))
             else:
                 possible_moves.append(Move(card, None, None, None))
-
+        print(f"All possibles moves : {''.join(str(move) for move in possible_moves)}")
         return possible_moves
 
 

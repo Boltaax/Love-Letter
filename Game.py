@@ -51,7 +51,7 @@ class LoveLetterGame:
 
 
     def get_other_player(self, player):
-        return next(p for p in self.players if p != player)
+        return next(p for p in self.players if p.name != player.name)
 
 
     def play_turn(self):
@@ -181,7 +181,11 @@ class LoveLetterGame:
         """
         Effect of the Guard card: guess a character, if correct, the target player is eliminated from the round.
         """
-        target_player = self.active_player.choose_target_player(self.players, self)
+        targets = []
+        for player in self.players:
+            if player.name != self.active_player.name:
+                targets.append(player)
+        target_player = self.active_player.choose_target_player(targets, self)
         if not target_player:
             self.log("No player is targetable, the card has no effect!")
             return
@@ -200,7 +204,11 @@ class LoveLetterGame:
         """
         Effect of the Priest card: look at the target player's card.
         """
-        target_player = self.active_player.choose_target_player(self.players, self)
+        targets = []
+        for player in self.players:
+            if player.name != self.active_player.name:
+                targets.append(player)
+        target_player = self.active_player.choose_target_player(targets, self)
         if target_player:
             self.log(f"{self.active_player.name} chooses {target_player.name} as target and looks at {target_player.card().name}")
             self.active_player.remember_player_card(target_player.card())
@@ -213,7 +221,11 @@ class LoveLetterGame:
         Effect of the Baron card: compare the target player's card with the current player's card.
         The player with the lower value card is eliminated from the round.
         """
-        target_player = self.active_player.choose_target_player(self.players, self)
+        targets = []
+        for player in self.players:
+            if player.name != self.active_player.name:
+                targets.append(player)
+        target_player = self.active_player.choose_target_player(targets, self)
         if not target_player:
             self.log("No player is targetable, the card has no effect!")
             return
@@ -280,7 +292,11 @@ class LoveLetterGame:
         """
         Effect of the King card: the current player exchanges his/her card with the target player's card.
         """
-        target_player = self.active_player.choose_target_player(self.players, self)
+        targets = []
+        for player in self.players:
+            if player.name != self.active_player.name:
+                targets.append(player)
+        target_player = self.active_player.choose_target_player(targets, self)
         if not target_player:
             self.log("No player is targetable, the card has no effect!")
             return
@@ -477,8 +493,8 @@ class LoveLetterGame:
 
     def __str__(self):
         return f"Game | deck: {self.deck}\n " \
-               f"discard: {self.discarded_cards}\n | " \
-               f"active player: {str(self.active_player)}\n | " \
+               f"discard: {self.discarded_cards}\n" \
+               f"active player: {str(self.active_player)}\n" \
                f"players: {', '.join(str(player) for player in self.players)}"
 
 

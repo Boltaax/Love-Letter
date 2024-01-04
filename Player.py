@@ -90,7 +90,7 @@ class Player:
 
         :return: The chosen player.
         """
-        available_players = [p for p in players if p != self and p.reachable and p.hand]
+        available_players = [p for p in players if p.reachable and p.hand]
         return self.strategy.choose_target_player(self, available_players, game)
 
 
