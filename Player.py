@@ -105,42 +105,6 @@ class Player:
                                  "Countess", "Princess"]
         return self.strategy.choose_character(self, possible_characters, game)
 
-    def get_possible_moves(self, all_players):
-        """
-        Get a list of possible moves for the player in the current game state.
-
-        :param all_players: A list of all players in the game.
-
-        :return: A list of possible moves. Each move is represented as a tuple (action, card, target),
-                 where 'action' is either 'play' or 'discard', 'card' is the card to be played or discarded,
-                 and 'target' is the target player or -1 (no specific target).
-        """
-        possible_moves = []
-
-        if self.hand:
-            for card in self.hand:
-                # Check if the card has a specific target
-                if card.name == "Guard":
-                    targetable_players = [p for p in all_players if p != self and p.reachable and p.hand]
-                    for target_player in targetable_players:
-                        for character in ['Spy', 'Priest', 'Baron', 'Handmaid', 'Prince', 'Chancellor', 'King', 'Countess', 'Princess']:
-                            possible_moves.append(Move(card, target_player, character, None))
-                elif card.name == "Priest" or card.name == "Baron" or card.name == "King":
-                    targetable_players = [p for p in all_players if p != self and p.reachable and p.hand]
-                    for target_player in targetable_players:
-                        possible_moves.append(Move(card, target_player, None, None))
-                elif card.name == "Prince":
-                    targetable_players = [p for p in all_players if p.reachable and p.hand]
-                    for target_player in targetable_players:
-                        possible_moves.append(Move(card, target_player, None, None))
-                elif card.name == "Chancellor":
-                    for character in ['Spy', 'Guard', 'Priest', 'Baron', 'Handmaid', 'Prince', 'Chancellor', 'King', 'Countess', 'Princess']:
-                        possible_moves.append(Move(card, None, None, character))
-                else:
-                    possible_moves.append(Move(card, None, None, None))
-
-        return possible_moves
-
     def remember_player_card(self, card):
         """
         Remember a card that the player saw in another player's hand.
@@ -152,13 +116,15 @@ class Player:
 
     def forget_player_card(self, card):
         """
-        Erase the card from the memory of all players
+        Erase the card from the memory of the player
 
         :param card: The card to be erased from the memory.
         """
-        for c in self.player_memory:
-            if card.name == c.name:
-                self.player_memory.remove(card)
+        card_removed = False
+        for c in self.player_memory[:]:
+            if card.name == c.name and not card_removed:
+                self.player_memory.remove(c)
+                card_removed = True
 
 
 

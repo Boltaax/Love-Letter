@@ -5,6 +5,7 @@ from Move import Move
 class LoveLetterSimulatedGame(LoveLetterGame):
     def __init__(self, original_game):
         super().__init__(original_game.players)
+        self.players = deepcopy(original_game.players)
         self.deck = deepcopy(original_game.deck)
         self.discarded_cards = deepcopy(original_game.discarded_cards)
         self.points = deepcopy(original_game.points)
@@ -22,22 +23,27 @@ class LoveLetterSimulatedGame(LoveLetterGame):
         :return: The simulated game state after the player's turn.
         """
         # Create a deep copy of the current game state
-        simulated_game = deepcopy(self)
-        if simulated_game.is_round_end():
-            simulated_game.end_of_round()
-
         # Find the player in the simulated game
-        simulated_player = next(p for p in simulated_game.players if p.name == player.name)
+        simulated_player = next(p for p in self.players if p.name == player.name)
         simulated_player.hand = player.hand.copy()
-        simulated_game.active_player = simulated_player
+        self.active_player = simulated_player
 
         # Simulate the effect of the player's turn
-        simulated_game.resolve_player_turn(simulated_player, move)
+        self.resolve_player_turn(simulated_player, move)
+        op = self.get_other_player(simulated_player)
 
-        print(self)
-        # Check if the round should end
+        # Check if the round has ended
+        if self.is_round_end():
+            return self
+        # Else, we are doing all the things necessary for the next player simulated turn
+        else:
+            self.active_player = op
+            self.active_player.reachable = True
+            drawn_card = self.deck.draw()
+            self.active_player.draw(drawn_card)
+            self.draw_memory(self.active_player, drawn_card)
+            return self
 
-        return simulated_game
 
     def resolve_player_turn(self, player, move):
         """
@@ -51,6 +57,8 @@ class LoveLetterSimulatedGame(LoveLetterGame):
             print(f"Simulated played moove : card: {move.card} target: ({move.target}) character: {move.character} keep: {move.keep}")
             played_card = next(card for card in player.hand if card.name == move.card.name)
             player.hand.remove(played_card)
+            op = self.get_other_player(player)
+            op.forget_player_card(played_card)
             self.resolve_effect(move)
 
 
@@ -218,67 +226,5 @@ class LoveLetterSimulatedGame(LoveLetterGame):
 
         return possible_moves
 
-    def probability_ennemy_have_card(self, player, card_name):
-        """
-        Calculate a probability-based score for a player.
-
-        :param player: The player for whom to calculate the score.
-
-        :return: The calculated score based on probabilities.
-        """
-        has_card = 0
-        num_card = 2
-
-        for c in player.player_memory:
-            if c.name == card_name:
-                return 1
-
-        for c in player.hand:
-            if c.name == card_name:
-                has_card += 1
-        match card_name:
-            case "Guard":
-                num_card = 6
-            case "King":
-                num_card = 1
-            case "Countess":
-                num_card = 1
-            case "Princess":
-                num_card = 1
-
-        probability_card = (num_card - self.discarded_cards.get(card_name, 0) - has_card) / (len(self.deck.draw_pile) + 1)
-
-        return probability_card
-
-    def probability_draw_card(self, card_name, original_player):
-        """
-        Calculate a probability-based score for a player.
-
-        :param original_player: The player for whom to calculate the best move
-
-        :return: The calculated score based on probabilities.
-        """
-        if original_player.deck_memory[0].name == card_name:
-            return 1
-        has_card = 0
-        num_card = 2
-        for c in original_player.player_memory:
-            if c.name == card_name:
-                has_card += 1
-        for c in original_player.hand:
-            if c.name == card_name:
-                has_card += 1
-        match card_name:
-            case "Guard":
-                num_card = 6
-            case "King":
-                num_card = 1
-            case "Countess":
-                num_card = 1
-            case "Princess":
-                num_card = 1
-        probability_card = (num_card - self.discarded_cards.get(card_name, 0) - has_card) / (
-                    len(self.deck.draw_pile) + 1)
-        return probability_card
 
 

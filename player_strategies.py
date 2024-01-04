@@ -3,7 +3,7 @@ from copy import deepcopy
 import random
 from SimulatedGame import LoveLetterSimulatedGame
 from Cards import Card
-from Move import Move
+from itertools import product
 
 
 
@@ -89,10 +89,10 @@ class RandomStrategy(PlayerStrategy):
 
 
 class MinMaxStrategy(PlayerStrategy):
-    def __init__(self, depth=3):
+    def __init__(self, depth=2):
         self.depth = depth
         self.original_player = None  # Ajout de la variable pour stocker le joueur d'origine
-        self.best_move = Move()
+        self.best_move = None # Ajout de ma variable pour stocker la meilleure action à réaliser
 
     def choose_card_to_play(self, player, game):
         self.original_player = player  # Stocker le joueur d'origine
@@ -101,7 +101,8 @@ class MinMaxStrategy(PlayerStrategy):
 
         print(pov_player)
 
-        self.best_move = self.expectiminimax(pov_player, self.depth, True)
+        #self.best_move = self.expectiminimax(pov_player, self.depth)
+        self.best_move = self.depth_algo(pov_player, 3, True)
         return self.best_move.card  # Retourne la carte du meilleur mouvement
 
     def choose_target_player(self, player, players, game):
@@ -120,94 +121,210 @@ class MinMaxStrategy(PlayerStrategy):
         # Met à jour les informations avec les données que le joueur actif connaît
         active_player = copied_board.active_player
 
+        copied_board.deck.draw_pile = active_player.deck_memory
+
         for player in copied_board.players:
             if not copied_board.is_active_player(player):
                 if not active_player.player_memory:
                     player.hand.pop()
                     player.hand.append(Card('unknown', -1))
-                player.deck_memory = ['unknown'] * len(copied_board.deck.draw_pile)
+                player.deck_memory = [Card('unknown', -1)] * len(copied_board.deck.draw_pile)
 
         return copied_board
 
-    def expectiminimax(self, game, depth, maximizing_player):
-        #TODO : Initialiser une partie avec les mêmes caractéristiques mais toutes les cartes non connues à l'init deviennent
-        # des cartes 'unknown' qui lorsqu'elles sont piochées peuvent devenir n'importe laquelle des cartes possiblement piochables
-        # (p > 0) il faut garder la probabilité de chaque carte pour multiplier chaque proba entre elles et le poids de chaque moove
-        # est calculé à la fin avec evaluate_board qui donne un score, eval = proba_totale*score et si celle-ci est la plus élevée
-        # elle est gardée et le moove qui a provoqué ceci est gardé en tant que best_moove.
+    def expectiminimax(self, game, depth):
+
+        game = deepcopy(game)
+
+        weighted_evals = 0
+        total_probability = 0
 
         if depth == 0 or game.is_round_over():
             return self.evaluate_board(game)
 
-        if maximizing_player:
+        if depth == self.depth:
             max_eval = float('-inf')
             best_move = None
 
-            for possible_move in game.get_possible_moves(self):
-
+            for possible_move in game.get_possible_moves(game.active_player):
+                op = game.get_other_player(game.active_player)
+                if op.card().name == "unknown":
+                    for card_name in self.get_possible_cards(game, op):
+                        op.hand.pop()
+                        op.hand.append(Card(card_name))
+                        print(f"test : {op.card()}")
 
                 next_game = game.simulate_player_turn(self, possible_move)
-                eval = self.expectiminimax(next_game, depth - 1, False)
+                eval = self.expectiminimax(next_game, depth - 1)
                 if eval > max_eval:
                     max_eval = eval
                     best_move = possible_move
             return best_move
-        else:
-            weighted_evals = 0
-            total_probability = 0
-
+        elif (game.active_player.name != self.original_player.name):
             for possible_move in game.get_possible_moves(self):
-
                 next_game = game.simulate_player_turn(self, possible_move)
-
-                if self.random_event_at_node(next_game):
-                    probability = self.probability_of_random_event(next_game)
-                    weighted_evals += probability * self.expectiminimax(next_game, depth - 1, maximizing_player)
-                    total_probability += probability
-                else:
-                    eval = self.expectiminimax(next_game, depth - 1, True)
-                    weighted_evals += eval
-                    total_probability += 1
+                eval = self.expectiminimax(next_game, depth - 1)
+                weighted_evals += eval
+                total_probability += 1
 
             return weighted_evals / total_probability if total_probability != 0 else 0
 
-    def random_event_at_node(self, game):
-        # TODO: Implémentez votre fonction pour déterminer s'il y a un événement aléatoire à ce nœud du jeu
-        pass
+    def depth_algo(self, game, depth, maximizing):
+        game = deepcopy(game)
+        weighted_evals = 0
+        total_probability = 0
 
-    def probability_of_random_event(self, game):
-        # TODO: Implémentez votre fonction pour calculer la probabilité de l'événement aléatoire à ce nœud du jeu
-        pass
+        if depth == 0 or game.is_round_end():
+            print(f"{game.deck.draw_pile}")
+            return self.evaluate_board(game)
+
+        elif maximizing:
+            max_eval = float('-inf')
+            best_move = None
+            for possible_hand, proba1 in zip(*self.get_possible_hands(game, game.active_player)):
+                game.active_player.hand = possible_hand
+                for possible_move in game.get_possible_moves(game.active_player):
+                    op = game.get_other_player(game.active_player)
+                    for possible_card, proba2 in zip(*self.get_possible_cards(game, op)):
+                        op.hand = [Card(possible_card)]
+                        print("test")
+                        next_game = deepcopy(game.simulate_player_turn(game.active_player, possible_move))
+                        eval = self.depth_algo(next_game, depth - 1, False) * proba1 * proba2
+                        if eval > max_eval:
+                            max_eval = eval
+                            best_move = possible_move
+            print(f"best move : {best_move}")
+            return best_move
+        else:
+            for possible_hand, proba1 in zip(*self.get_possible_hands(game, game.active_player)):
+                game.active_player.hand = possible_hand
+                for possible_move in game.get_possible_moves(game.active_player):
+                    op = game.get_other_player(game.active_player)
+                    for possible_card, proba2 in zip(*self.get_possible_cards(game, op)):
+                        op.hand.pop()
+                        op.hand.append(Card(possible_card))
+                        next_game = deepcopy(game.simulate_player_turn(game.active_player, possible_move))
+                        eval = self.depth_algo(next_game, depth - 1, False) * proba1 * proba2
+                        weighted_evals += eval
+                        total_probability += 1
+            return weighted_evals / total_probability if total_probability != 0 else 0
+
+
+    def get_possible_cards(self, game, player):
+        possible_cards = []
+        probabilities = []
+        named_cards = ["Spy", "Guard", "Priest", "Baron", "Handmaid", "Prince", "Chancellor", "King", "Countess", "Princess"]
+
+        if player.card().name != "unknown":
+            possible_cards.append(player.card().name)
+        else:
+            for card_name in named_cards:
+                count_card = (
+                        game.discarded_cards.get(card_name, 0) +
+                        sum(1 for card in player.deck_memory if card.name == card_name) +
+                        sum(1 for card in player.player_memory if card.name == card_name) +
+                        sum(1 for card in player.hand if card.name == card_name)
+                    )
+
+                # Calculate the total count of the card in the game
+                num_card = {"Spy": 2, "Guard": 6, "Priest": 2, "Baron": 2, "Handmaid": 2, "Prince": 2, "Chancellor": 2,
+                            "King": 1, "Countess": 1, "Princess": 1}
+                # Check if the card is still possible
+                probability = 1 - count_card / num_card.get(card_name, 0)
+                if probability > 0:
+                    possible_cards.append(card_name)
+                    probabilities.append(probability)
+        return possible_cards, probabilities
+
+    def get_possible_hands(self, game, player):
+        possible_hands = []
+        probabilities = []
+        named_cards = ["Spy", "Guard", "Priest", "Baron", "Handmaid", "Prince", "Chancellor", "King", "Countess",
+                       "Princess"]
+        unknown_cards = sum(1 for card in player.hand if card.name == "unknown")
+        nbr_unknown_card = (
+                sum(1 for card in player.deck_memory if card.name == "unknown") +
+                sum(1 for card in player.player_memory if card.name == "unknown") +
+                sum(1 for card in player.hand if card.name == "unknown")
+        )
+
+        if unknown_cards == 0:
+            possible_hands.append(player.hand)
+            probabilities.append(1)
+        elif unknown_cards == 1:
+            known_card = next((card for card in player.hand if card.name != "unknown"))
+            for card_name in named_cards:
+                possible_hand = [known_card, Card(card_name)]
+                count_card = (
+                        game.discarded_cards.get(card_name, 0) +
+                        sum(1 for card in player.deck_memory if card.name == card_name) +
+                        sum(1 for card in player.player_memory if card.name == card_name) +
+                        sum(1 for card in player.hand if card.name == card_name)
+                )
+                num_card = {"Spy": 2, "Guard": 6, "Priest": 2, "Baron": 2, "Handmaid": 2, "Prince": 2, "Chancellor": 2,
+                            "King": 1, "Countess": 1, "Princess": 1}
+                probability = (num_card.get(card_name, 0) - count_card) / nbr_unknown_card if nbr_unknown_card != 0 else 0
+                # Check if the card is still possible
+                if probability > 0:
+                    possible_hands.append(possible_hand)
+                    probabilities.append(probability)
+        elif unknown_cards == 2:
+            for card_name_1, card_name_2 in product(named_cards, repeat=2):
+                possible_hand = [Card(card_name_1), Card(card_name_2)]
+                count_card_1 = (
+                        game.discarded_cards.get(card_name_1, 0) +
+                        sum(1 for card in player.deck_memory if card.name == card_name_1) +
+                        sum(1 for card in player.player_memory if card.name == card_name_1) +
+                        sum(1 for card in player.hand if card.name == card_name_1)
+                )
+                count_card_2 = (
+                        game.discarded_cards.get(card_name_2, 0) +
+                        sum(1 for card in player.deck_memory if card.name == card_name_2) +
+                        sum(1 for card in player.player_memory if card.name == card_name_2) +
+                        sum(1 for card in player.hand if card.name == card_name_2)
+                )
+                if card_name_1 == card_name_2:
+                    count_card_2 += 1
+                num_card = {"Spy": 2, "Guard": 6, "Priest": 2, "Baron": 2, "Handmaid": 2, "Prince": 2, "Chancellor": 2,
+                            "King": 1, "Countess": 1, "Princess": 1}
+                probability_1 = (num_card.get(card_name_1, 0) - count_card_1) / nbr_unknown_card if nbr_unknown_card != 0 else 0
+                probability_2 = (num_card.get(card_name_2, 0) - count_card_2) / nbr_unknown_card-1 if nbr_unknown_card-1 != 0 else 0
+                probability = probability_1 * probability_2
+                if probability > 0:
+                    possible_hands.append(possible_hand)
+                    probabilities.append(probability)
+
+        for i, hand in enumerate(possible_hands):
+            print(f" main{i + 1} : {', '.join(str(card) for card in hand)}, probability: {probabilities[i]}")
+
+        return possible_hands, probabilities
+
+
 
     def evaluate_board(self, simulated_board):
         # TODO: Implement a heuristic evaluation function to evaluate the current game state
         evaluation_score = 0
         # Check if the current player has been eliminated
         if not self.original_player.hand:
-            evaluation_score -= 10000  # Deduct a high score for being eliminated
+            evaluation_score -= 100  # Deduct a high score for being eliminated
             for p in simulated_board.players:
                 if p != simulated_board.players and p.hand:
-                    evaluation_score += (simulated_board.points[self.original_player] - simulated_board.points[p]) * 1000
+                    evaluation_score += (simulated_board.points[self.original_player] - simulated_board.points[p]) * 10
 
         # Check if any other player has been eliminated
         for p in simulated_board.players:
             if not p.hand and p != simulated_board.players:
-                evaluation_score += 1000  # Add points for each player who has been eliminated
+                evaluation_score += 100  # Add points if winning
 
         # Check the number of cards in the player's memory
         if self.original_player.player_memory:
-            evaluation_score += 50 * self.original_player.player_memory
-
-
-        # TODO: Implement a searching algorithm thanks to probability to give a score for each possibility that a player can win or not the game
-        #  he will use the probability_draw_card method, and give for each player the probability that he will win thanks to the higher score card
+            evaluation_score += 5 * (1+self.original_player.player_memory[0].value)
 
         # Add more evaluation factors based on the specific game rules and strategies
-
         return evaluation_score
 
-    def probability_draw_card(self, player, card, game):
-        return game.probability_draw_cards(player, card)
+    def probability_draw_card(self, card, game):
+        return game.probability_draw_card(card, self.original_player)
 
 
 

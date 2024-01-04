@@ -49,7 +49,7 @@ def play_game(players, verbose=False):
     :param players: A list of Player objects participating in the game.
     """
     game = LoveLetterGame(players, verbose=verbose)
-    game.distribute_cards()
+    game.new_round()
 
     while max(game.points.values()) < game.target_points:
         game.play_turn()

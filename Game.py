@@ -1,4 +1,5 @@
 from Deck import Deck
+from Cards import Card
 
 class LoveLetterGame:
     def __init__(self, players, verbose=False):
@@ -42,8 +43,8 @@ class LoveLetterGame:
             Ensuite, pour chaque joueur, enlève la première valeur du tableau deck memory
         """
         op = self.get_other_player(player)
-        if op.deck_memory:
-            op.player_memory.append(drawn_card.name)
+        if op.deck_memory[0].name != "unknown":
+            op.remember_player_card(drawn_card)
         for p in self.players:
             if p.deck_memory:
                 p.deck_memory.pop(0)
@@ -87,8 +88,7 @@ class LoveLetterGame:
 
         :param player: The current player.
         """
-        if not player.reachable:
-            player.reachable = True  # Make the player reachable again
+        player.reachable = True  # Make the player reachable again
 
         if player.hand and self.deck.draw_pile:
             self.execute_player_action(player)
@@ -360,7 +360,7 @@ class LoveLetterGame:
         self.active_player.hand.append(card_to_keep)
         self.active_player.deck_memory.extend(cards_to_return)
         op = self.get_other_player(self.active_player)
-        op.deck_memory.extend(['unknown', 'unknown'])
+        op.deck_memory.extend([Card('unknown', -1), Card('unknown', -1)])
         self.deck.draw_pile.extend(cards_to_return)
 
 
@@ -444,6 +444,7 @@ class LoveLetterGame:
         self.spy_count = 0
         self.reset_players_for_new_round()
         self.distribute_cards()
+        self.initiate_deck_memory()
         self.active_player = self.players[0]
 
 
@@ -454,7 +455,6 @@ class LoveLetterGame:
         for player in self.players:
             player.hand = []
             player.player_memory = []
-            player.deck_memory = []
             player.has_played_or_discarded_spy = False
             player.reachable = True
 
@@ -473,12 +473,12 @@ class LoveLetterGame:
 
     def initiate_deck_memory(self):
         for player in self.players:
-            player.deck_memory = ['unknown'] * len(self.deck.draw_pile)
+            player.deck_memory = [Card('unknown', -1)] * len(self.deck.draw_pile)
 
     def __str__(self):
-        return f"Game | deck: {self.deck} " \
-               f"discard: {self.discarded_cards} | " \
-               f"active player: {str(self.active_player)} | " \
+        return f"Game | deck: {self.deck}\n " \
+               f"discard: {self.discarded_cards}\n | " \
+               f"active player: {str(self.active_player)}\n | " \
                f"players: {', '.join(str(player) for player in self.players)}"
 
 
