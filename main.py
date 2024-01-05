@@ -1,11 +1,9 @@
-import random
 
 from Player import Player
 from Game import LoveLetterGame
 from tqdm import tqdm
 from player_strategies import get_strategies
 
-global game
 
 
 def create_players(number_of_players):

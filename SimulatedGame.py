@@ -53,8 +53,6 @@ class LoveLetterSimulatedGame(LoveLetterGame):
         :param move: The move the player is making.
         """
         if move.card:
-            print(f"Simulated player: {player}")
-            print(f"Simulated played moove : card: {move.card} target: ({move.target}) character: {move.character} keep: {move.keep}")
             played_card = next(card for card in player.hand if card.name == move.card.name)
             player.hand.remove(played_card)
             op = self.get_other_player(player)
@@ -96,7 +94,11 @@ class LoveLetterSimulatedGame(LoveLetterGame):
         Effect of the Guard card: guess a character, if correct, the target player is eliminated from the round.
         """
 
-        target_player = move.target
+        target_player = None
+        for player in self.players:
+            if move.target:
+                if player.name == move.target.name:
+                    target_player = player
         if not target_player:
             self.log("No player is targetable, the card has no effect!")
             return
@@ -115,7 +117,11 @@ class LoveLetterSimulatedGame(LoveLetterGame):
         Effect of the Priest card: look at the target player's card.
         """
 
-        target_player = move.target
+        target_player = None
+        for player in self.players:
+            if move.target:
+                if player.name == move.target.name:
+                    target_player = player
         if target_player:
             self.log(f"{self.active_player.name} chooses {target_player.name} as target and looks at {target_player.card().name}")
             self.active_player.remember_player_card(target_player.card())
@@ -127,8 +133,11 @@ class LoveLetterSimulatedGame(LoveLetterGame):
         Effect of the Baron card: compare the target player's card with the current player's card.
         The player with the lower value card is eliminated from the round.
         """
-
-        target_player = move.target
+        target_player = None
+        for player in self.players:
+            if move.target:
+                if player.name == move.target.name:
+                    target_player = player
         if not target_player:
             self.log("No player is targetable, the card has no effect!")
             return
@@ -147,8 +156,11 @@ class LoveLetterSimulatedGame(LoveLetterGame):
         """
         Effect of the Prince card: the target player discards his/her card and draws a new one.
         """
-
-        target_player = move.target
+        target_player = None
+        for player in self.players:
+            if move.target:
+                if player.name == move.target.name:
+                    target_player = player
         if not target_player or not self.deck.draw_pile:
             self.log("No player is targetable, or deck is empty. The card has no effect!")
             return
@@ -167,6 +179,10 @@ class LoveLetterSimulatedGame(LoveLetterGame):
             return
         if move.keep:
             drawn_cards = [self.deck.draw(), self.deck.draw()]
+            for c in drawn_cards:
+                self.active_player.draw(c)
+                self.draw_memory(self.active_player, c)
+
             self.log(f"{self.active_player.name} draws {len(drawn_cards)} card(s): {[card.name for card in drawn_cards]}")
 
             card_to_keep = self.active_player.hand[move.keep]
@@ -178,7 +194,11 @@ class LoveLetterSimulatedGame(LoveLetterGame):
         Effect of the King card: the current player exchanges his/her card with the target player's card.
         """
 
-        target_player = move.target
+        target_player = None
+        for player in self.players:
+            if move.target:
+                if player.name == move.target.name:
+                    target_player = player
         if not target_player:
             self.log("No player is targetable, the card has no effect!")
             return
@@ -223,7 +243,6 @@ class LoveLetterSimulatedGame(LoveLetterGame):
                     possible_moves.append(Move(card, None, None, i))
             else:
                 possible_moves.append(Move(card, None, None, None))
-        print(f"All possibles moves : {''.join(str(move) for move in possible_moves)}")
         return possible_moves
 
 

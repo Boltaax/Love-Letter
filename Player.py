@@ -1,4 +1,3 @@
-from Move import Move
 
 class Player:
     def __init__(self, name, strategy):

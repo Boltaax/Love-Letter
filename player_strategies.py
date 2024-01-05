@@ -99,14 +99,11 @@ class MinMaxStrategy(PlayerStrategy):
         simulated_game = LoveLetterSimulatedGame(game)
         pov_player = self.copy_player_view(simulated_game)
 
-        print(pov_player)
-        self.best_move = self.depth_algo(pov_player, 1, True)
-        print(f"Best move : {self.best_move}")
+        self.best_move = self.depth_algo(pov_player, self.depth, True)
         best_card = next(c for c in player.hand if c.name == self.best_move.card.name)
         return best_card  # Retourne la carte du meilleur mouvement
 
     def choose_target_player(self, player, players, game):
-        print(f"players : {', '.join(str(player) for player in players)} --- best move target : {str(self.best_move.target)}")
         best_target = None
         if players:
             for p in players:
@@ -145,7 +142,6 @@ class MinMaxStrategy(PlayerStrategy):
         total_probability = 0
 
         if depth == 0 or game.is_round_end():
-            print("\n\nEnvoyé\n\n")
             return self.evaluate_board(game)
 
         elif maximizing:
@@ -154,19 +150,16 @@ class MinMaxStrategy(PlayerStrategy):
             for possible_hand, proba1 in zip(*self.get_possible_hands(game, game.active_player)):
                 game.active_player.hand = possible_hand
                 for possible_move in game.get_possible_moves(game.active_player):
-                    print(str(possible_move))
                     op = game.get_other_player(game.active_player)
                     for possible_card, proba2 in zip(*self.get_possible_cards(game, op)):
                         test_game = deepcopy(game)
+                        op = test_game.get_other_player(test_game.active_player)
                         op.hand = [Card(possible_card)]
-                        next_game = test_game.simulate_player_turn(game.active_player, possible_move)
-                        eval = self.depth_algo(next_game, depth - 1, False)
-                        print(f"Eval finale : {eval}")
-                        if eval * proba1 * proba2 > max_eval:
+                        next_game = test_game.simulate_player_turn(test_game.active_player, possible_move)
+                        eval = self.depth_algo(next_game, depth - 1, False) * proba1 * proba2
+                        if eval > max_eval:
                             max_eval = eval
                             best_move = possible_move
-                        print(f"Best eval : {max_eval}")
-
             return best_move
         else:
             for possible_hand, proba1 in zip(*self.get_possible_hands(game, game.active_player)):
@@ -175,11 +168,11 @@ class MinMaxStrategy(PlayerStrategy):
                     op = game.get_other_player(game.active_player)
                     for possible_card, proba2 in zip(*self.get_possible_cards(game, op)):
                         test_game = deepcopy(game)
+                        op = test_game.get_other_player(test_game.active_player)
                         op.hand = [Card(possible_card)]
-                        next_game = test_game.simulate_player_turn(game.active_player, possible_move)
-                        eval = self.depth_algo(next_game, depth - 1, False)
-                        print(f"Eval inter : {eval}")
-                        weighted_evals += eval * proba1 * proba2
+                        next_game = test_game.simulate_player_turn(test_game.active_player, possible_move)
+                        eval = self.depth_algo(next_game, depth - 1, False) * proba1 * proba2
+                        weighted_evals += eval
                         total_probability += 1
             return weighted_evals / total_probability if total_probability != 0 else 0
 
@@ -196,6 +189,7 @@ class MinMaxStrategy(PlayerStrategy):
 
         if player.card() and player.card().name != "unknown":
             possible_cards.append(player.card().name)
+            probabilities.append(1)
         else:
             for card_name in named_cards:
                 count_card = (
@@ -233,7 +227,6 @@ class MinMaxStrategy(PlayerStrategy):
             probabilities.append(1)
         elif unknown_cards == 1:
             known_card = next((card for card in player.hand if card.name != "unknown"))
-            print(f"carte connue : {known_card.name}")
             for card_name in named_cards:
                 possible_hand = [known_card, Card(card_name)]
                 count_card = (
@@ -269,17 +262,37 @@ class MinMaxStrategy(PlayerStrategy):
                 num_card = {"Spy": 2, "Guard": 6, "Priest": 2, "Baron": 2, "Handmaid": 2, "Prince": 2, "Chancellor": 2,
                             "King": 1, "Countess": 1, "Princess": 1}
                 probability_1 = (num_card.get(card_name_1, 0) - count_card_1) / nbr_unknown_card if nbr_unknown_card != 0 else 0
-                probability_2 = (num_card.get(card_name_2, 0) - count_card_2) / nbr_unknown_card-1 if nbr_unknown_card-1 != 0 else 0
+                probability_2 = (num_card.get(card_name_2, 0) - count_card_2) / (nbr_unknown_card-1) if nbr_unknown_card-1 != 0 else 0
                 probability = probability_1 * probability_2
                 if probability > 0:
                     possible_hands.append(possible_hand)
                     probabilities.append(probability)
 
-        for i, hand in enumerate(possible_hands):
-            print(f" main{i + 1} : {', '.join(str(card) for card in hand)}, probability: {probabilities[i]}")
-
         return possible_hands, probabilities
 
+
+    def proba_card(self, game, player, card_name):
+        num_card = {"Spy": 2, "Guard": 6, "Priest": 2, "Baron": 2, "Handmaid": 2, "Prince": 2, "Chancellor": 2,
+                    "King": 1, "Countess": 1, "Princess": 1}
+        count_card = (
+                game.discarded_cards.get(card_name, 0) +
+                sum(1 for card in player.hand if card.name == card_name)
+        )
+        if sum(1 for card in player.player_memory if card.name == card_name) >= 1:
+            probability = 1
+        else :
+            probability = (num_card.get(card_name, 0) - count_card) / (len(game.deck.draw_pile)+sum(1 for card in player.player_memory if card.name == "unknown")) if (len(game.deck.draw_pile)+sum(1 for card in player.player_memory if card.name == "unknown")) != 0 else 0
+        return probability
+
+    def proba_best_card(self, game, player, card_name):
+        score_card = {"Spy": 0, "Guard": 1, "Priest": 2, "Baron": 3, "Handmaid": 4, "Prince": 5, "Chancellor": 6,
+                    "King": 7, "Countess": 8, "Princess": 9}
+        prob_higher_value = 0
+        for name, value in score_card.items():
+            if value <= score_card[card_name]:
+                prob_higher_value += self.proba_card(game, player, name)
+
+        return prob_higher_value
 
     def evaluate_board(self, simulated_board):
         evaluation_score = 0
@@ -290,25 +303,45 @@ class MinMaxStrategy(PlayerStrategy):
                 if not p.hand:
                     evaluation_score -= 100 # Deduct a high score for being eliminated
                 if p.has_played_or_discarded_spy and op.has_played_or_discarded_spy:
-                    evaluation_score -= 5
+                    evaluation_score += 5
                 elif p.has_played_or_discarded_spy and not op.has_played_or_discarded_spy:
                     evaluation_score += 10
                 elif not p.has_played_or_discarded_spy and op.has_played_or_discarded_spy:
-                    evaluation_score -= 15
+                    evaluation_score -= 10
                 if p.player_memory:
                     evaluation_score += 2 * (1 + p.player_memory[0].value)
-
-                #TODO : ajouter des scores en fonctions du score de la carte et de la présence ou non du Roi, de gardes, de princes, etc.. dans les cartes possibles
-                # pour chaque carte dans la carte du joueur en fonction de sa value ou nom on compare, en faire environ 10 par cartes
+                for card in p.hand:
+                    if card.name != "unknown":
+                        evaluation_score += self.proba_best_card(simulated_board, p, card.name) * len(simulated_board.deck.draw_pile) * card.value
+                    match card.name:
+                        case "Spy":
+                            evaluation_score -= (self.proba_card(simulated_board, p, "Guard") + (self.proba_card(simulated_board, p, "Baron")) * self.proba_card(simulated_board, op, "Spy"))
+                        case "Guard":
+                            evaluation_score -= (self.proba_card(simulated_board, p, "Baron") * self.proba_card(simulated_board, op, "Guard"))
+                        case "Priest":
+                            evaluation_score -= (self.proba_card(simulated_board, p, "Guard") + (self.proba_card(simulated_board, p, "Baron")) * self.proba_card(simulated_board, op, "Priest"))
+                        case "Baron":
+                            evaluation_score -= self.proba_card(simulated_board, p, "Guard") * self.proba_card(simulated_board, op, "Baron")
+                        case "Handmaid":
+                            evaluation_score += self.proba_card(simulated_board, p, "Baron") * self.proba_card(simulated_board, op, "Handmaid") - self.proba_card(simulated_board, p, "Guard") * self.proba_card(simulated_board, op, "Handmaid")
+                        case "Prince":
+                            evaluation_score += self.proba_card(simulated_board, p, "Baron") * self.proba_card(simulated_board, op, "Prince") + self.proba_card(simulated_board, p, "Princess") + self.proba_card(simulated_board, p, "Countess") + self.proba_card(simulated_board, p, "King") + self.proba_card(simulated_board, p, "Chancellor") + self.proba_card(simulated_board, p, "Prince") - self.proba_card(simulated_board, p, "Guard") * self.proba_card(simulated_board, op, "Prince")
+                        case "Chancellor":
+                            evaluation_score += self.proba_card(simulated_board, p, "Guard") * self.proba_card(simulated_board, op, "Chancellor") - self.proba_card(simulated_board, p, "Guard") * self.proba_card(simulated_board, op, "Chancellor")
+                        case "King":
+                            evaluation_score += self.proba_card(simulated_board, p, "Guard") * self.proba_card(simulated_board, op, "King") - self.proba_card(simulated_board, p, "Guard") * self.proba_card(simulated_board, op, "King")
+                        case "Countess":
+                            evaluation_score += self.proba_card(simulated_board, p, "Guard") * self.proba_card(simulated_board, op, "Countess") - self.proba_card(simulated_board, p, "Guard") * self.proba_card(simulated_board, op, "Countess")
+                        case "Princess":
+                            evaluation_score += self.proba_card(simulated_board, p, "Guard") * self.proba_card(simulated_board, op, "Princess") - (self.proba_card(simulated_board, p, "Guard") * self.proba_card(simulated_board, op, "Princess") + self.proba_card(simulated_board, p, "Prince") * self.proba_card(simulated_board, op, "Princess") )
 
             else:
                 if not p.hand:
                     evaluation_score += 100 # Add a high score for eliminating the other player
 
-
-
         # Add more evaluation factors based on the specific game rules and strategies
         return evaluation_score
+
 
 
 
