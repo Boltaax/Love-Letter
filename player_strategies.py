@@ -82,6 +82,13 @@ class RandomStrategy(PlayerStrategy):
         return self._choose_from_list(player.hand + cards)
 
     def _choose_from_list(self, items):
+        '''
+            Choose a random item of the list in parameters
+
+            :param items: The list of items to choose from
+
+            :return: The chosen item
+        '''
         if items:
             return random.choice(items)
         else:
@@ -89,7 +96,7 @@ class RandomStrategy(PlayerStrategy):
 
 
 class MinMaxStrategy(PlayerStrategy):
-    def __init__(self, depth=2):
+    def __init__(self, depth=1):
         self.depth = depth
         self.original_player = None  # Ajout de la variable pour stocker le joueur d'origine
         self.best_move = None # Ajout de ma variable pour stocker la meilleure action à réaliser
@@ -119,6 +126,14 @@ class MinMaxStrategy(PlayerStrategy):
         return all_cards[self.best_move.keep]   # Retourne la carte à garder du meilleur mouvement
 
     def copy_player_view(self, simulated_board):
+        """
+        The function go through the knowledge of the actual player like if it was a human to made a board without all the
+        information, this function is create to proof that the AI doesn't have an advantage of knowledge compared to
+        a human.
+
+        :param simulated_board: the actual board of the game
+        :return: the board by the point of view of the actual active player
+        """
         # Crée une copie de l'état du jeu en tenant compte des informations du joueur
         copied_board = deepcopy(simulated_board)  # Commence par une copie profonde
 
@@ -137,6 +152,19 @@ class MinMaxStrategy(PlayerStrategy):
         return copied_board
 
     def depth_algo(self, _game, depth, maximizing):
+        """
+            The depth_algo function is an algorithm self-made copying the minimax algorithm by his recursive method,
+            but the randomness/luck of the Love Letter game caused to modify it to go through an imperfect information
+            game.
+
+            :param _game: the actual simulated board, equivalent to a node
+            :param depth: the depth before evaluating the board
+            :param maximizing: a boolean, it is True only for the first call of the function
+
+            :return: the best move chose by the algorithm
+
+        """
+
         game = deepcopy(_game)
         weighted_evals = 0
         total_probability = 0
@@ -178,6 +206,16 @@ class MinMaxStrategy(PlayerStrategy):
 
 
     def get_possible_cards(self, game, player):
+        """
+            Send all the possible card a player could have, if the card is known it returns only the known card but
+            if it is an unknown card, it will add all the possible card the player could have (with a probability >0).
+
+            :param game: the actual simulated board
+            :param player: the player (not the active player in the turn)
+
+            :return: a list of all possible cards a player could have at the moment.
+
+        """
         possible_cards = []
         probabilities = []
         named_cards = ["Spy", "Guard", "Priest", "Baron", "Handmaid", "Prince", "Chancellor", "King", "Countess", "Princess"]
@@ -211,6 +249,18 @@ class MinMaxStrategy(PlayerStrategy):
         return possible_cards, probabilities
 
     def get_possible_hands(self, game, player):
+        """
+            Send all the possible hand a player could have, for each unknown card in the player hand it replace it with
+            all the possible cards he could have at the moment (with a probability >0).
+
+            :param game: the actual simulated board
+            :param player: the player (active player in the turn)
+
+
+            :return: a list of all possible hands a player could have at the moment. Hands are list so it returns a list
+                     of lists
+
+        """
         possible_hands = []
         probabilities = []
         named_cards = ["Spy", "Guard", "Priest", "Baron", "Handmaid", "Prince", "Chancellor", "King", "Countess",
@@ -272,6 +322,15 @@ class MinMaxStrategy(PlayerStrategy):
 
 
     def proba_card(self, game, player, card_name):
+        """
+            Calculate the probability of the card in parameter to be in the hand of the other player
+
+            :param game: the actual simulated board
+            :param player: the player whose you compare the adversary with
+            :param card_name: the name of the card you want to know the probability of being in the hand of the other player
+
+            :return: the probability
+        """
         num_card = {"Spy": 2, "Guard": 6, "Priest": 2, "Baron": 2, "Handmaid": 2, "Prince": 2, "Chancellor": 2,
                     "King": 1, "Countess": 1, "Princess": 1}
         count_card = (
@@ -285,6 +344,15 @@ class MinMaxStrategy(PlayerStrategy):
         return probability
 
     def proba_best_card(self, game, player, card_name):
+        """
+            Calculate the probability of the card in parameter to be the best card in the hand of the players
+
+            :param game: the actual simulated board
+            :param player: the player whose you compare the adversary with
+            :param card_name: the name of the card you want to know the probability of being the best
+
+            :return: the probability
+        """
         score_card = {"Spy": 0, "Guard": 1, "Priest": 2, "Baron": 3, "Handmaid": 4, "Prince": 5, "Chancellor": 6,
                     "King": 7, "Countess": 8, "Princess": 9}
         prob_higher_value = 0
@@ -295,6 +363,14 @@ class MinMaxStrategy(PlayerStrategy):
         return prob_higher_value
 
     def evaluate_board(self, simulated_board):
+        """
+            Calculate the heuristics value of the board from the point of vew of the original player
+
+            :param : simulated_board: the board after all the simulated moves
+
+            :return: An evaluation score, it depends on the cards the original player will have in the simulated board
+                     and what will be the possible cards of the adversary, the length of the draw pile and many parameters
+        """
         evaluation_score = 0
         # Check if the current player has been eliminated
         for p in simulated_board.players:

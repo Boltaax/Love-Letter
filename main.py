@@ -1,9 +1,8 @@
-
 from Player import Player
 from Game import LoveLetterGame
 from tqdm import tqdm
 from player_strategies import get_strategies
-
+from collections import defaultdict
 
 
 def create_players(number_of_players):
@@ -52,7 +51,7 @@ def play_game(players, verbose=False):
     while max(game.points.values()) < game.target_points:
         game.play_turn()
 
-    return max(game.points, key=game.points.get)
+    return game.points
 
 
 # Main script
@@ -69,14 +68,19 @@ if __name__ == "__main__":
 
     players = create_players(number_of_players)
     win_counts = {player.name: 0 for player in players}
+    game_results = defaultdict(int)
 
     with tqdm(total=number_of_games) as pbar:
         for _ in range(number_of_games):
-            winner = play_game(players, verbose=verbose)
+            points = play_game(players, verbose=verbose)
+            winner = max(points, key=points.get)
             win_counts[winner.name] += 1
+            game_results[tuple(points.values())] += 1
             pbar.update(1)
 
     total_games = sum(win_counts.values())
     for player_name, wins in win_counts.items():
         win_rate = wins / total_games if total_games > 0 else 0
         print(f"{player_name} wins: {wins} ({win_rate:.2%} win rate)")
+    for score, count in sorted(game_results.items()):
+        print(f"{score}: {count} game{'s' if count > 1 else ''}")

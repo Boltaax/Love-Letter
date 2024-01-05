@@ -26,6 +26,18 @@ class LoveLetterGame:
             raise ValueError("The number of players should be between 2 and 6.")
 
 
+    def play_turn(self):
+        """
+        Conduct a single turn in the game.
+        """
+        for current_player in self.players:
+            self.active_player = current_player
+            if self.is_round_end():
+                self.end_of_round()
+                break
+            self.handle_player_turn(current_player)
+
+
     def distribute_cards(self):
         """
         Distribute one card to each player from the deck at the start of the game.
@@ -52,19 +64,6 @@ class LoveLetterGame:
 
     def get_other_player(self, player):
         return next(p for p in self.players if p.name != player.name)
-
-
-    def play_turn(self):
-        """
-        Conduct a single turn in the game.
-        """
-        for current_player in self.players:
-            self.active_player = current_player
-            if self.is_round_end():
-                self.end_of_round()
-                break
-
-            self.handle_player_turn(current_player)
 
 
     def is_round_end(self):

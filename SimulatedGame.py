@@ -63,6 +63,8 @@ class LoveLetterSimulatedGame(LoveLetterGame):
     def resolve_effect(self, move):
         """
         Resolve the effect of the played card.
+
+        :param move: The best move chose by the algorithm
         """
         effect_method = self.get_effect_method(move)
 
@@ -74,7 +76,10 @@ class LoveLetterSimulatedGame(LoveLetterGame):
 
     def get_effect_method(self, move):
         """
-        Return the method corresponding to the card's effect.
+
+        :param move: The best move chose by the algorithm
+
+        :return : the method corresponding to the card's effect.
         """
         return {
             "Spy": self.effect_spy,
@@ -92,6 +97,8 @@ class LoveLetterSimulatedGame(LoveLetterGame):
     def effect_guard_s(self, move):
         """
         Effect of the Guard card: guess a character, if correct, the target player is eliminated from the round.
+
+        :param move: The best move chose by the algorithm
         """
 
         target_player = None
@@ -115,6 +122,8 @@ class LoveLetterSimulatedGame(LoveLetterGame):
     def effect_priest_s(self, move):
         """
         Effect of the Priest card: look at the target player's card.
+
+        :param move: The best move chose by the algorithm
         """
 
         target_player = None
@@ -132,6 +141,8 @@ class LoveLetterSimulatedGame(LoveLetterGame):
         """
         Effect of the Baron card: compare the target player's card with the current player's card.
         The player with the lower value card is eliminated from the round.
+
+        :param move: The best move chose by the algorithm
         """
         target_player = None
         for player in self.players:
@@ -155,6 +166,8 @@ class LoveLetterSimulatedGame(LoveLetterGame):
     def effect_prince_s(self, move):
         """
         Effect of the Prince card: the target player discards his/her card and draws a new one.
+
+        :param move: The best move chose by the algorithm
         """
         target_player = None
         for player in self.players:
@@ -172,6 +185,8 @@ class LoveLetterSimulatedGame(LoveLetterGame):
         """
         Effect of the Chancellor card: the current player draws 2 cards from the deck.
         One of the cards is kept, the others are returned to the deck.
+
+        :param move: The best move chose by the algorithm
         """
 
         if len(self.deck.draw_pile) < 2:
@@ -192,6 +207,8 @@ class LoveLetterSimulatedGame(LoveLetterGame):
     def effect_king_s(self, move):
         """
         Effect of the King card: the current player exchanges his/her card with the target player's card.
+
+        :param move: The best move chose by the algorithm
         """
 
         target_player = None
@@ -211,9 +228,10 @@ class LoveLetterSimulatedGame(LoveLetterGame):
 
         :param player: the player whose it the turn to play.
 
-        :return: A list of possible moves. Each move is represented as a tuple (action, card, target),
-                 where 'action' is either 'play' or 'discard', 'card' is the card to be played or discarded,
-                 and 'target' is the target player or None (no specific target).
+        :return: A list of possible moves. Each move is represented as a tuple (card, character, target, keep),
+                 where 'card' is the card to be played, 'character' is the character designated with the guard or None,
+                 'target' is the target player or None (no specific target) and 'keep' is the number of the card keep
+                 with the Chancellor effect or None.
         """
         op = self.get_other_player(player)
         possible_moves = []
