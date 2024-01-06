@@ -2,7 +2,7 @@ from Deck import Deck
 from Cards import Card
 
 class LoveLetterGame:
-    def __init__(self, players, verbose=False):
+    def __init__(self, players, game_number=0, verbose=False):
         # TODO: Add GUI support
         """
         Initialize a new LoveLetter game with the given players.
@@ -10,6 +10,7 @@ class LoveLetterGame:
         :param players: A list of Player objects participating in the game.
         :param verbose: If True, the game will print detailed information about each turn.
         """
+        self.game_number = game_number
         self.players = players
         self.deck = Deck()
         self.deck.fill()

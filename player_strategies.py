@@ -14,7 +14,7 @@ def get_strategies():
     return {
         "Human": HumanStrategy,
         "Random": RandomStrategy,
-        "MinMax": MinMaxStrategy
+        "MiniMax": MiniMaxStrategy
     }
 
 
@@ -37,6 +37,8 @@ class PlayerStrategy(ABC):
 
 
 class HumanStrategy(PlayerStrategy):
+    def __init__(self):
+        self.name = "Human"
     def choose_card_to_play(self, player, game):
         return self._choose_from_list(player.name, player.hand, "Choose a card to play: ")
     
@@ -69,6 +71,8 @@ class HumanStrategy(PlayerStrategy):
 
 
 class RandomStrategy(PlayerStrategy):
+    def __init__(self):
+        self.name = "Random"
     def choose_card_to_play(self, player, game):
         return self._choose_from_list(player.hand)
     
@@ -95,18 +99,19 @@ class RandomStrategy(PlayerStrategy):
             return None
 
 
-class MinMaxStrategy(PlayerStrategy):
+class MiniMaxStrategy(PlayerStrategy):
     def __init__(self, depth=1):
         self.depth = depth
         self.original_player = None  # Ajout de la variable pour stocker le joueur d'origine
         self.best_move = None # Ajout de ma variable pour stocker la meilleure action à réaliser
+        self.name = "MiniMax"
 
     def choose_card_to_play(self, player, game):
         self.original_player = player  # Stocker le joueur d'origine
         simulated_game = LoveLetterSimulatedGame(game)
         pov_player = self.copy_player_view(simulated_game)
 
-        self.best_move = self.depth_algo(pov_player, self.depth, True)
+        self.best_move = self.lucky_minimax(pov_player, self.depth, True)
         best_card = next(c for c in player.hand if c.name == self.best_move.card.name)
         return best_card  # Retourne la carte du meilleur mouvement
 
@@ -151,9 +156,9 @@ class MinMaxStrategy(PlayerStrategy):
 
         return copied_board
 
-    def depth_algo(self, _game, depth, maximizing):
+    def lucky_minimax(self, _game, depth, maximizing):
         """
-            The depth_algo function is an algorithm self-made copying the minimax algorithm by his recursive method,
+            The function is an algorithm self-made copying the minimax algorithm by his recursive method,
             but the randomness/luck of the Love Letter game caused to modify it to go through an imperfect information
             game.
 
@@ -184,7 +189,7 @@ class MinMaxStrategy(PlayerStrategy):
                         op = test_game.get_other_player(test_game.active_player)
                         op.hand = [Card(possible_card)]
                         next_game = test_game.simulate_player_turn(test_game.active_player, possible_move)
-                        eval = self.depth_algo(next_game, depth - 1, False) * proba1 * proba2
+                        eval = self.lucky_minimax(next_game, depth - 1, False) * proba1 * proba2
                         if eval > max_eval:
                             max_eval = eval
                             best_move = possible_move
@@ -199,7 +204,7 @@ class MinMaxStrategy(PlayerStrategy):
                         op = test_game.get_other_player(test_game.active_player)
                         op.hand = [Card(possible_card)]
                         next_game = test_game.simulate_player_turn(test_game.active_player, possible_move)
-                        eval = self.depth_algo(next_game, depth - 1, False) * proba1 * proba2
+                        eval = self.lucky_minimax(next_game, depth - 1, False) * proba1 * proba2
                         weighted_evals += eval
                         total_probability += 1
             return weighted_evals / total_probability if total_probability != 0 else 0

@@ -4,3 +4,5 @@ copy
 random
 itertools
 collections
+pandas
+matplotlib
