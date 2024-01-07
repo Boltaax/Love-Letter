@@ -2,69 +2,9 @@ from Player import Player
 from Game import LoveLetterGame
 from tqdm import tqdm
 from player_strategies import get_strategies
-from collections import defaultdict
 import pandas as pd
 import matplotlib.pyplot as plt
-class GameStats:
-    def __init__(self, game_number):
-        self.game_number = game_number
-        self.rounds = []
-        self.points = defaultdict(int)
-        self.winner = None
-
-    def add_round(self, round_info):
-        self.rounds.append(round_info)
-        for player, points in round_info['points'].items():
-            self.points[player.name] += points
-        self.winner = max(self.points, key=self.points.get)
-
-    def to_dataframe(self):
-        df_data = []
-        for round_info in self.rounds:
-            game_number = round_info['game_number']
-            winner = round_info['winner']
-            loser = round_info['loser'] if 'loser' in round_info else None
-            winner_points = round_info['points'][winner]
-            loser_points = round_info['points'].get(loser, None) if loser else None
-
-            df_data.append({
-                'GameNumber': game_number,
-                'Winner': winner.name,
-                'WinnerStrategy': f"{winner.strategy.name} {winner.strategy.depth}" if hasattr(winner.strategy, 'depth') and winner.strategy.depth else winner.strategy.name,
-                'WinnerPoints': winner_points,
-                'LoserPoints': loser_points,
-                'Loser': loser.name,
-                'LoserStrategy': f"{loser.strategy.name} {loser.strategy.depth}" if hasattr(loser.strategy, 'depth') and loser.strategy.depth else loser.strategy.name
-            })
-
-        df = pd.DataFrame(df_data)
-        return df
-
-    def save_to_excel(self, excel_writer, sheet_name):
-        df = self.to_dataframe()
-        # Ajoutez une feuille vide pour éviter l'erreur openpyxl
-        if sheet_name not in excel_writer.sheets:
-            excel_writer.book.create_sheet(sheet_name)
-
-        df.to_excel(excel_writer, sheet_name=sheet_name, index=False, startrow=excel_writer.sheets[sheet_name].max_row,
-                    header=False)
-
-    def header(self, excel_writer, sheet_name):
-        df = pd.DataFrame([{
-            'GameNumber': 'Game Number',
-            'Winner': 'Winner',
-            'WinnerStrategy': 'Winner Strategy',
-            'WinnerPoints': 'Winner points',
-            'LoserPoints': 'Loser points',
-            'Loser': 'Loser',
-            'LoserStrategy': 'Loser Strategy'
-        }])
-        if sheet_name not in excel_writer.sheets:
-            excel_writer.book.create_sheet(sheet_name)
-
-        df.to_excel(excel_writer, sheet_name=sheet_name, index=False, startrow=excel_writer.sheets[sheet_name].max_row,
-                    header=False)
-
+from GameStats import GameStats
 
 def create_players(number_of_players):
     """
@@ -161,7 +101,7 @@ if __name__ == "__main__":
 
     print(f"\nResults saved to {excel_file_path}")
 
-    # Création d'un DataFrame pour stocker les résultats
+    # Create a dataframe with the results
     results_df = pd.DataFrame(columns=['GameNumber', 'Player', 'Points'])
     for game_stats in total_game_stats:
         for round_info in game_stats.rounds:
@@ -169,9 +109,9 @@ if __name__ == "__main__":
             for player, points in round_info['points'].items():
                 results_df = pd.concat([results_df, pd.DataFrame({'GameNumber': [game_number], 'Player': [player], 'Points': [points]})], ignore_index=True)
 
-    # Création du graphique de la progression des points
+    # Create the points progression graph
     plt.figure(figsize=(12, 8))
-    plt.subplot(2, 1, 1)  # Création du premier sous-graphique
+    plt.subplot(2, 1, 1)  # Create the first subplot
     for player in results_df['Player'].unique():
         player_data = results_df[results_df['Player'] == player]
         total_points = player_data['Points'].sum()
@@ -183,8 +123,8 @@ if __name__ == "__main__":
     plt.title('Points Progression by Player')
     plt.legend()
 
-    # Création du graphique à barres
-    plt.subplot(2, 1, 2)  # Création du deuxième sous-graphique
+    # Create the wins by player graph (bar chart)
+    plt.subplot(2, 1, 2)  # Create the second subplot
     players_names = list(win_counts.keys())
     wins = list(win_counts.values())
     win_percentages = {player: wins / total_games for player, wins in win_counts.items()}
@@ -199,6 +139,6 @@ if __name__ == "__main__":
         win_rate = win_percentages[player]
         plt.text(bar.get_x() + bar.get_width() / 2, bar.get_height(), f'{win_rate:.2%}', ha='center', va='bottom')
 
-    # Affichage des sous-graphiques
-    plt.tight_layout()  # Pour éviter les chevauchements
+    # Display the graphs
+    plt.tight_layout()  # Avoid overlapping of the subplots
     plt.show()

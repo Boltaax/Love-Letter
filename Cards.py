@@ -13,6 +13,15 @@ class Card:
             self.set_value(name)
 
     def set_value(self, name):
+        """
+        Set the value of the card based on its name.
+
+        Args:
+            name (str): The name of the card.
+
+        Returns:
+            None
+        """
         match name:
             case "unknown":
                 self.value = -1
@@ -36,6 +45,7 @@ class Card:
                 self.value = 8
             case "Princess":
                 self.value = 9
+
     def __str__(self):
         """
         Return a string representation of the card.

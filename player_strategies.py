@@ -87,11 +87,11 @@ class RandomStrategy(PlayerStrategy):
 
     def _choose_from_list(self, items):
         '''
-            Choose a random item of the list in parameters
+        Choose a random item of the list in parameters
 
-            :param items: The list of items to choose from
+        :param items: The list of items to choose from
 
-            :return: The chosen item
+        :return: The chosen item
         '''
         if items:
             return random.choice(items)
@@ -158,15 +158,15 @@ class MiniMaxStrategy(PlayerStrategy):
 
     def lucky_minimax(self, _game, depth, maximizing):
         """
-            The function is an algorithm self-made copying the minimax algorithm by his recursive method,
-            but the randomness/luck of the Love Letter game caused to modify it to go through an imperfect information
-            game.
+        The function is an algorithm self-made copying the minimax algorithm by his recursive method,
+        but the randomness/luck of the Love Letter game caused to modify it to go through an imperfect information
+        game.
 
-            :param _game: the actual simulated board, equivalent to a node
-            :param depth: the depth before evaluating the board
-            :param maximizing: a boolean, it is True only for the first call of the function
+        :param _game: the actual simulated board, equivalent to a node
+        :param depth: the depth before evaluating the board
+        :param maximizing: a boolean, it is True only for the first call of the function
 
-            :return: the best move chose by the algorithm
+        :return: the best move chose by the algorithm
 
         """
 
@@ -212,13 +212,13 @@ class MiniMaxStrategy(PlayerStrategy):
 
     def get_possible_cards(self, game, player):
         """
-            Send all the possible card a player could have, if the card is known it returns only the known card but
-            if it is an unknown card, it will add all the possible card the player could have (with a probability >0).
+        Send all the possible card a player could have, if the card is known it returns only the known card but
+        if it is an unknown card, it will add all the possible card the player could have (with a probability >0).
 
-            :param game: the actual simulated board
-            :param player: the player (not the active player in the turn)
+        :param game: the actual simulated board
+        :param player: the player (not the active player in the turn)
 
-            :return: a list of all possible cards a player could have at the moment.
+        :return: a list of all possible cards a player could have at the moment.
 
         """
         possible_cards = []
@@ -255,15 +255,15 @@ class MiniMaxStrategy(PlayerStrategy):
 
     def get_possible_hands(self, game, player):
         """
-            Send all the possible hand a player could have, for each unknown card in the player hand it replace it with
-            all the possible cards he could have at the moment (with a probability >0).
+        Send all the possible hand a player could have, for each unknown card in the player hand it replace it with
+        all the possible cards he could have at the moment (with a probability >0).
 
-            :param game: the actual simulated board
-            :param player: the player (active player in the turn)
+        :param game: the actual simulated board
+        :param player: the player (active player in the turn)
 
 
-            :return: a list of all possible hands a player could have at the moment. Hands are list so it returns a list
-                     of lists
+        :return: a list of all possible hands a player could have at the moment. Hands are list so it returns a list
+                    of lists
 
         """
         possible_hands = []
@@ -328,13 +328,13 @@ class MiniMaxStrategy(PlayerStrategy):
 
     def proba_card(self, game, player, card_name):
         """
-            Calculate the probability of the card in parameter to be in the hand of the other player
+        Calculate the probability of the card in parameter to be in the hand of the other player
 
-            :param game: the actual simulated board
-            :param player: the player whose you compare the adversary with
-            :param card_name: the name of the card you want to know the probability of being in the hand of the other player
+        :param game: the actual simulated board
+        :param player: the player whose you compare the adversary with
+        :param card_name: the name of the card you want to know the probability of being in the hand of the other player
 
-            :return: the probability
+        :return: the probability
         """
         num_card = {"Spy": 2, "Guard": 6, "Priest": 2, "Baron": 2, "Handmaid": 2, "Prince": 2, "Chancellor": 2,
                     "King": 1, "Countess": 1, "Princess": 1}
@@ -350,13 +350,13 @@ class MiniMaxStrategy(PlayerStrategy):
 
     def proba_best_card(self, game, player, card_name):
         """
-            Calculate the probability of the card in parameter to be the best card in the hand of the players
+        Calculate the probability of the card in parameter to be the best card in the hand of the players
 
-            :param game: the actual simulated board
-            :param player: the player whose you compare the adversary with
-            :param card_name: the name of the card you want to know the probability of being the best
+        :param game: the actual simulated board
+        :param player: the player whose you compare the adversary with
+        :param card_name: the name of the card you want to know the probability of being the best
 
-            :return: the probability
+        :return: the probability
         """
         score_card = {"Spy": 0, "Guard": 1, "Priest": 2, "Baron": 3, "Handmaid": 4, "Prince": 5, "Chancellor": 6,
                     "King": 7, "Countess": 8, "Princess": 9}
@@ -369,12 +369,12 @@ class MiniMaxStrategy(PlayerStrategy):
 
     def evaluate_board(self, simulated_board):
         """
-            Calculate the heuristics value of the board from the point of vew of the original player
+        Calculate the heuristics value of the board from the point of vew of the original player
 
-            :param : simulated_board: the board after all the simulated moves
+        :param : simulated_board: the board after all the simulated moves
 
-            :return: An evaluation score, it depends on the cards the original player will have in the simulated board
-                     and what will be the possible cards of the adversary, the length of the draw pile and many parameters
+        :return: An evaluation score, it depends on the cards the original player will have in the simulated board
+                    and what will be the possible cards of the adversary, the length of the draw pile and many parameters
         """
         evaluation_score = 0
         # Check if the current player has been eliminated

@@ -3,7 +3,6 @@ from Cards import Card
 
 class LoveLetterGame:
     def __init__(self, players, game_number=0, verbose=False):
-        # TODO: Add GUI support
         """
         Initialize a new LoveLetter game with the given players.
 
@@ -48,12 +47,12 @@ class LoveLetterGame:
 
     def draw_memory(self, player, drawn_card):
         """
-            :param player : the player who draws a card
+        :param player : the player who draws a card
 
-            :param drawn_card : the card that were drawn
+        :param drawn_card : the card that were drawn
 
-            Récupère dans la mémoire de l'autre joueur la 1ère carte du deck et l'ajoute à la memoire player
-            Ensuite, pour chaque joueur, enlève la première valeur du tableau deck memory
+        Récupère dans la mémoire de l'autre joueur la 1ère carte du deck et l'ajoute à la memoire player
+        Ensuite, pour chaque joueur, enlève la première valeur du tableau deck memory
         """
         op = self.get_other_player(player)
         if op.deck_memory[0].name != "unknown":
@@ -64,6 +63,16 @@ class LoveLetterGame:
 
 
     def get_other_player(self, player):
+        """
+        Returns the other player in the game.
+
+        Parameters:
+        - player: The current player.
+
+        Returns:
+        - The other player in the game.
+
+        """
         return next(p for p in self.players if p.name != player.name)
 
 
