@@ -6,7 +6,6 @@ from Cards import Card
 from itertools import product
 
 
-
 def get_strategies():
     '''
     Returns a dictionary of all available strategies
@@ -16,7 +15,6 @@ def get_strategies():
         "Random": RandomStrategy,
         "MiniMax": MiniMaxStrategy
     }
-
 
 class PlayerStrategy(ABC):
     @abstractmethod
@@ -34,7 +32,6 @@ class PlayerStrategy(ABC):
     @abstractmethod
     def choose_character(self, player, characters, game):
         pass
-
 
 class HumanStrategy(PlayerStrategy):
     def __init__(self):
@@ -69,7 +66,6 @@ class HumanStrategy(PlayerStrategy):
                     return items[int(choice)]
                 print("Invalid input. Please enter a valid number.")
 
-
 class RandomStrategy(PlayerStrategy):
     def __init__(self):
         self.name = "Random"
@@ -98,37 +94,57 @@ class RandomStrategy(PlayerStrategy):
         else:
             return None
 
-
 class MiniMaxStrategy(PlayerStrategy):
     def __init__(self, depth=1):
         self.depth = depth
-        self.original_player = None  # Ajout de la variable pour stocker le joueur d'origine
-        self.best_move = None # Ajout de ma variable pour stocker la meilleure action à réaliser
+        self.original_player = None  # Add the variable to store the original player
+        self.best_move = None # Add variable to store the best move to do
         self.name = "MiniMax"
 
     def choose_card_to_play(self, player, game):
-        self.original_player = player  # Stocker le joueur d'origine
-        simulated_game = LoveLetterSimulatedGame(game)
-        pov_player = self.copy_player_view(simulated_game)
+            """
+            Selects the best card to play based on the current game state.
 
-        self.best_move = self.lucky_minimax(pov_player, self.depth, True)
-        best_card = next(c for c in player.hand if c.name == self.best_move.card.name)
-        return best_card  # Retourne la carte du meilleur mouvement
+            Args:
+                player (Player): The current player.
+                game (Game): The current game state.
+
+            Returns:
+                Card: The best card to play.
+            """
+            self.original_player = player  # Store the original player
+            simulated_game = LoveLetterSimulatedGame(game)
+            pov_player = self.copy_player_view(simulated_game)
+
+            self.best_move = self.lucky_minimax(pov_player, self.depth, True)
+            best_card = next(c for c in player.hand if c.name == self.best_move.card.name)
+            return best_card
 
     def choose_target_player(self, player, players, game):
+        """
+        Choose the target player for the current move.
+
+        Args:
+            player (Player): The current player.
+            players (list): List of all players in the game.
+            game (Game): The current game.
+
+        Returns:
+            Player: The chosen target player.
+        """
         best_target = None
         if players:
             for p in players:
                 if p.name == self.best_move.target.name:
                     best_target = p
-        return best_target  # Retourne la cible du meilleur mouvement
+        return best_target
 
     def choose_character(self, player, characters, game):
-        return self.best_move.character  # Retourne le personnage à deviner du meilleur mouvement
+        return self.best_move.character  # Return the character to guess of the best move
 
     def keep_card(self, player, cards, game):
         all_cards = player.hand + cards
-        return all_cards[self.best_move.keep]   # Retourne la carte à garder du meilleur mouvement
+        return all_cards[self.best_move.keep]   # Return the card to keep of the best move
 
     def copy_player_view(self, simulated_board):
         """
@@ -139,10 +155,10 @@ class MiniMaxStrategy(PlayerStrategy):
         :param simulated_board: the actual board of the game
         :return: the board by the point of view of the actual active player
         """
-        # Crée une copie de l'état du jeu en tenant compte des informations du joueur
-        copied_board = deepcopy(simulated_board)  # Commence par une copie profonde
+        # Create a copy of the game state
+        copied_board = deepcopy(simulated_board)  # Start witt a deep copy of the board
 
-        # Met à jour les informations avec les données que le joueur actif connaît
+        # Update the information with the data that the active player knows
         active_player = copied_board.active_player
 
         copied_board.deck.draw_pile = active_player.deck_memory
@@ -422,8 +438,3 @@ class MiniMaxStrategy(PlayerStrategy):
 
         # Add more evaluation factors based on the specific game rules and strategies
         return evaluation_score
-
-
-
-
-

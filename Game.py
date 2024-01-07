@@ -7,6 +7,7 @@ class LoveLetterGame:
         Initialize a new LoveLetter game with the given players.
 
         :param players: A list of Player objects participating in the game.
+        :param game_number: The number of the game.
         :param verbose: If True, the game will print detailed information about each turn.
         """
         self.game_number = game_number
@@ -25,7 +26,6 @@ class LoveLetterGame:
         if len(players) > 6 or len(players) < 2:
             raise ValueError("The number of players should be between 2 and 6.")
 
-
     def play_turn(self):
         """
         Conduct a single turn in the game.
@@ -36,7 +36,6 @@ class LoveLetterGame:
                 self.end_of_round()
                 break
             self.handle_player_turn(current_player)
-
 
     def distribute_cards(self):
         """
@@ -61,7 +60,6 @@ class LoveLetterGame:
             if p.deck_memory:
                 p.deck_memory.pop(0)
 
-
     def get_other_player(self, player):
         """
         Returns the other player in the game.
@@ -74,7 +72,6 @@ class LoveLetterGame:
 
         """
         return next(p for p in self.players if p.name != player.name)
-
 
     def is_round_end(self):
         """
@@ -89,7 +86,6 @@ class LoveLetterGame:
         Check if the round is over based on the game state.
         """
         return len(self.deck.draw_pile) == 0 or len([p for p in self.players if p.hand]) == 1
-    
 
     def handle_player_turn(self, player):
         """
@@ -103,7 +99,6 @@ class LoveLetterGame:
             self.execute_player_action(player)
         elif not self.deck.draw_pile:
             self.end_of_round()
-
     
     def execute_player_action(self, player):
         """
@@ -131,8 +126,6 @@ class LoveLetterGame:
                 self.resolve_effect(played_card)
                 op = self.get_other_player(player)
                 op.forget_player_card(played_card)
-
-
     
     def handle_countess_play(self, player):
         """
@@ -148,7 +141,6 @@ class LoveLetterGame:
                     print(f"{player.name} is forced to play the Countess card.")
                 break
 
-
     def resolve_effect(self, card):
         """
         Resolve the effect of the played card.
@@ -156,7 +148,6 @@ class LoveLetterGame:
         effect_method = self.get_effect_method(card.name)
         if effect_method:
             effect_method()
-
 
     def get_effect_method(self, card_name):
         """
@@ -174,17 +165,14 @@ class LoveLetterGame:
             "Countess": self.effect_countess,
             "Princess": self.effect_princess
         }.get(card_name, None)
-    
 
     def effect_spy(self):
         """
         Effect of the Spy card: no active effect.
         The only remaining player to have played or discarded a spy, if any, wins 1 bonus point.
         """
-
         current_player = self.active_player
         current_player.has_played_or_discarded_spy = True
-
 
     def effect_guard(self):
         """
@@ -208,7 +196,6 @@ class LoveLetterGame:
         else:
             self.log("The guess is incorrect. Nothing happens.")
 
-
     def effect_priest(self):
         """
         Effect of the Priest card: look at the target player's card.
@@ -223,7 +210,6 @@ class LoveLetterGame:
             self.active_player.remember_player_card(target_player.card())
         else:
             self.log("No player is targetable, the card has no effect!")
-
 
     def effect_baron(self):
         """
@@ -250,14 +236,12 @@ class LoveLetterGame:
         else:
             self.log("Tie, no one loses the round.")
 
-
     def effect_handmaid(self):
         """
         Effect of the Handmaid card: the current player cannot be targeted by other players for a turn.
         """
         self.active_player.reachable = False
         self.log(f"{self.active_player.name} is not targetable for a turn!")
-
 
     def effect_prince(self):
         """
@@ -270,7 +254,6 @@ class LoveLetterGame:
 
         self.log(f"{self.active_player.name} chooses {target_player.name}")
         self.discard_and_draw(target_player)
-
 
     def effect_chancellor(self):
         """
@@ -295,8 +278,6 @@ class LoveLetterGame:
         drawn_cards.append(self.active_player.hand.pop())
         self.return_cards_to_deck(drawn_cards, card_to_keep)
 
-
-
     def effect_king(self):
         """
         Effect of the King card: the current player exchanges his/her card with the target player's card.
@@ -318,7 +299,6 @@ class LoveLetterGame:
         """
         pass
 
-
     def effect_princess(self):
         """
         Effect of the Princess card: the current player is eliminated from the round if he/she plays or discards the card.
@@ -327,14 +307,12 @@ class LoveLetterGame:
         self.eliminate_player(current_player)
         self.log(f"{current_player.name} played the Princess and is eliminated from the round.")
 
-
     def log(self, message):
         """
         Print the given message if verbose mode is enabled.
         """
         if self.verbose:
             print(message)
-
 
     def log_duel_info(self, card1, card2):
         """
@@ -343,14 +321,12 @@ class LoveLetterGame:
         self.log(f"{self.active_player.name} has the {card1.name} card ({card1.value}).")
         self.log(f"Target player has the {card2.name} card ({card2.value}).")
 
-
     def eliminate_player(self, player):
         """
         Eliminate the given player from the round.
         """
         self.log(f"{player.name} loses the round.")
         player.hand = []
-
 
     def discard_and_draw(self, player):
         """
@@ -364,7 +340,6 @@ class LoveLetterGame:
                 player.draw(self.deck.draw())
             self.update_discarded_cards_count(discarded_card)
 
-
     def handle_discarded_card(self, card, player):
         """
         Handle the effect of the discarded card.
@@ -376,7 +351,6 @@ class LoveLetterGame:
             self.log(f"{player.name} discarded the Princess and is eliminated from the round.")
             player.hand = []
 
-
     def return_cards_to_deck(self, drawn_cards, card_to_keep):
         """
         Return the cards to the deck, except the one the player chose to keep.
@@ -387,7 +361,6 @@ class LoveLetterGame:
         op = self.get_other_player(self.active_player)
         op.deck_memory.extend([Card('unknown', -1), Card('unknown', -1)])
         self.deck.draw_pile.extend(cards_to_return)
-
 
     def exchange_cards(self, player1, player2):
         """
@@ -407,7 +380,6 @@ class LoveLetterGame:
         player2.remember_player_card(card2)
         player1.forget_player_card(card1)
 
-
     def end_of_round(self):
         """
         Handle the end of the round.
@@ -426,7 +398,6 @@ class LoveLetterGame:
         max_card_value = max(max(p.hand, key=lambda c: c.value).value for p in players_in_game)
         return [p for p in players_in_game if max(p.hand, key=lambda c: c.value).value == max_card_value]
 
-
     def award_points(self, winners):
         """
         Award points to the winner(s) of the round.
@@ -439,14 +410,12 @@ class LoveLetterGame:
 
         self.award_spy_bonus()
 
-
     def log_round_results(self, winners):
         """
         Print the results of the round.
         """
         self.log(f"Round winners: {', '.join(p.name for p in winners)}")
         self.log(f"Current points: {', '.join(f'{p.name}: {self.points[p]}' for p in self.players)}")
-
 
     def award_spy_bonus(self):
         """
@@ -456,7 +425,6 @@ class LoveLetterGame:
         if len(spy_players) == 1:
             self.points[spy_players[0]] += 1
             self.log(f"{spy_players[0].name} gets 1 bonus point for being the only player to play or discard a Spy card at the end of the round.")
-
 
     def new_round(self):
         """
@@ -471,7 +439,6 @@ class LoveLetterGame:
         self.distribute_cards()
         self.initiate_deck_memory()
         self.active_player = self.players[0]
-
 
     def reset_players_for_new_round(self):
         """
@@ -493,14 +460,29 @@ class LoveLetterGame:
             self.discarded_cards[card.name] = 1
 
     def is_active_player(self, player):
+        """
+        Checks if the given player is the active player in the game.
+
+        Parameters:
+            player (Player): The player to check.
+
+        Returns:
+            bool: True if the given player is the active player, False otherwise.
+        """
         return player.name == self.active_player.name
 
-
     def initiate_deck_memory(self):
+        """
+        Initializes the deck memory for each player.
+        The deck memory is a list of 'unknown' cards with a length equal to the draw pile.
+        """
         for player in self.players:
             player.deck_memory = [Card('unknown', -1)] * len(self.deck.draw_pile)
 
     def __str__(self):
+        """
+        Returns a string representation of the Game object.
+        """
         return f"Game | deck: {self.deck}\n " \
                f"discard: {self.discarded_cards}\n" \
                f"active player: {str(self.active_player)}\n" \

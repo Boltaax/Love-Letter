@@ -78,6 +78,7 @@ if __name__ == "__main__":
     total_game_stats = []
     excel_file_path = "game_results.xlsx"
 
+    # Write the results to an Excel file
     with pd.ExcelWriter(excel_file_path, engine='openpyxl') as writer:
         writer.book.create_sheet("GameResults")
         game_stats = GameStats(game_number=0)

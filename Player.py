@@ -15,7 +15,6 @@ class Player:
         self.player_memory = []
         self.deck_memory = []
 
-
     def draw(self, card):
         """
         Add a card to the player's hand.
@@ -24,7 +23,6 @@ class Player:
         """
         if card is not None:
             self.hand.append(card)
-
 
     def choose_card_to_play(self, game):
         """
@@ -35,7 +33,6 @@ class Player:
         choosen_card = self.strategy.choose_card_to_play(self, game)
         self.hand.remove(choosen_card)
         return choosen_card
-
 
     def card(self):
         """
@@ -48,7 +45,6 @@ class Player:
         else:
             return None
 
-
     def discard(self):
         """
         Remove and return the last card from the player's hand.
@@ -60,7 +56,6 @@ class Player:
         else:
             return None
 
-
     def keep_card(self, cards, game):
         """
         Choose a card to keep after playing the "Chancellor" card, according to the player's strategy.
@@ -71,7 +66,6 @@ class Player:
         """
         return self.strategy.keep_card(self, cards, game)
 
-
     def countess(self):
         """
         :return: Whether the player has the "Countess" card and a "King" or "Prince" card in hand.
@@ -79,7 +73,6 @@ class Player:
         has_comtesse = any(card.name == "Comtesse" for card in self.hand)
         has_king_or_prince = any(card.name in ["King", "Prince"] for card in self.hand)
         return has_comtesse and has_king_or_prince
-
 
     def choose_target_player(self, players, game):
         """
@@ -91,7 +84,6 @@ class Player:
         """
         available_players = [p for p in players if p.reachable and p.hand]
         return self.strategy.choose_target_player(self, available_players, game)
-
 
     def choose_character(self, game):
         """
@@ -125,10 +117,8 @@ class Player:
                 self.player_memory.remove(c)
                 card_removed = True
 
-
-
     def __str__(self):
         """
         Return a string representation of the player.
         """
-        return f"{self.name} has the hand: {', '.join(str(card) for card in self.hand)}"
+        return f"{self.name}"

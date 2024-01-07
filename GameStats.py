@@ -9,12 +9,22 @@ class GameStats:
         self.winner = None
 
     def add_round(self, round_info):
+        """
+        Add round information to the game stats.
+
+        :param round_info (dict): Information about the round, including player points.
+        """
         self.rounds.append(round_info)
         for player, points in round_info['points'].items():
             self.points[player.name] += points
         self.winner = max(self.points, key=self.points.get)
 
     def to_dataframe(self):
+        """
+        Converts the game statistics into a pandas DataFrame.
+
+        Returns: pandas.DataFrame: The game statistics as a DataFrame.
+        """
         df_data = []
         for round_info in self.rounds:
             game_number = round_info['game_number']
@@ -55,6 +65,13 @@ class GameStats:
                     header=False)
 
     def header(self, excel_writer, sheet_name):
+        """
+        Add header to the specified sheet in the Excel file.
+
+        Parameters:
+        - excel_writer (ExcelWriter): The Excel writer object.
+        - sheet_name (str): The name of the sheet to add the header to.
+        """
         df = pd.DataFrame([{
             'GameNumber': 'Game Number',
             'Winner': 'Winner',
